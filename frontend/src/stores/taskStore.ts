@@ -13,7 +13,7 @@ export interface Task {
 
 interface TaskStore {
   tasks: Task[];
-  addTask: (task: Omit<Task, 'id' | 'createdAt'>) => string;
+  addTask: (task: Omit<Task, 'id' | 'createdAt'> & { id?: string }) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   removeTask: (id: string) => void;
   clearTasks: () => void;
@@ -23,7 +23,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [],
 
   addTask: (task) => {
-    const id = `task-${Date.now()}`;
+    const id = task.id || `task-${Date.now()}`;
     const newTask: Task = {
       ...task,
       id,

@@ -1,8 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { api } from '@/services/api';
 import { useTaskStore } from '@/stores/taskStore';
-import { Form, Input, Button, Space } from 'antd';
+import { Form, Input, Button, Space, message } from 'antd';
 
 interface NewTaskFormProps {
   onClose: () => void;
@@ -10,24 +9,29 @@ interface NewTaskFormProps {
 
 export function NewTaskForm({ onClose }: NewTaskFormProps) {
   const [form] = Form.useForm();
-  const navigate = useNavigate();
   const { addTask } = useTaskStore();
 
   const mutation = useMutation({
-    mutationFn: api.generate,
-    onSuccess: (data, variables) => {
+    mutationFn: async (data: { url: string; filepath: string; description: string; username?: string; password?: string }) => {
+      const response = await api.generate(data);
+      return response;
+    },
+    onSuccess: (response, variables) => {
+      // Use backend's task_id, not local generated one
       addTask({
+        id: response.task_id,  // Use backend's task_id
         name: variables.filepath || `Task-${Date.now()}`,
         url: variables.url,
         description: variables.description,
-        status: 'completed',
-        result: data.message,
+        status: 'pending',
       });
-      navigate('/');
+      message.success('Task created successfully');
       onClose();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Generation failed:', error);
+      message.error('Failed to create task: ' + error.message);
+      onClose();
     },
   });
 
