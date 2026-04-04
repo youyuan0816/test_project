@@ -185,7 +185,8 @@ def download_task_file(task_id: str):
         raise HTTPException(status_code=404, detail="No file associated with this task")
 
     # Security check: ensure file is within test_cases/ directory
-    if ".." in result_file or result_file.startswith("/") or not result_file.startswith("test_cases/"):
+    normalized = os.path.normpath(result_file)
+    if ".." in normalized or not normalized.startswith("test_cases"):
         raise HTTPException(status_code=400, detail="Invalid file path")
 
     full_path = os.path.join(PROJECT_ROOT, result_file)
