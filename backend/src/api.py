@@ -211,7 +211,7 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
 
     return {
         "task_id": task_id,
-        "status": "pending",
+        "status": "running",
         "message": "File uploaded and test code generation started in background"
     }
 
