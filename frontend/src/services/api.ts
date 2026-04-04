@@ -1,15 +1,15 @@
 import axios from 'axios';
-import type { GenerateRequest, ContinueRequest, GenerateResponse, SessionsResponse, Task, TasksResponse } from './types';
+import type { GenerateRequest, ContinueRequest, CreateTaskResponse, SessionsResponse, Task, TasksResponse } from './types';
 
 const API_BASE = '/api';
 
 export const api = {
-  generate: async (data: GenerateRequest): Promise<GenerateResponse> => {
+  generate: async (data: GenerateRequest): Promise<CreateTaskResponse> => {
     const response = await axios.post(`${API_BASE}/generate`, data);
     return response.data;
   },
 
-  continueSession: async (data: ContinueRequest): Promise<GenerateResponse> => {
+  continueSession: async (data: ContinueRequest): Promise<CreateTaskResponse> => {
     const response = await axios.post(`${API_BASE}/continue`, data);
     return response.data;
   },
