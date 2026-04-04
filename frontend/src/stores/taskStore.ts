@@ -8,6 +8,7 @@ export interface Task {
   status: 'pending' | 'running' | 'completed' | 'failed';
   createdAt: string;
   result?: string;
+  result_file?: string;
 }
 
 interface TaskStore {

@@ -10,10 +10,17 @@ interface TaskData {
   status: 'pending' | 'running' | 'completed' | 'failed';
   createdAt: string;
   result?: string;
+  result_file?: string;
 }
 
 export function TaskList() {
   const { tasks, removeTask } = useTaskStore();
+
+  const handleDownload = (task: TaskData) => {
+    if (task.result_file) {
+      window.open(`/api/download/${task.id}`, '_blank');
+    }
+  };
 
   const columns: ColumnsType<TaskData> = [
     {
@@ -55,8 +62,14 @@ export function TaskList() {
       key: 'action',
       render: (_: unknown, record: TaskData) => (
         <Space>
-          {record.status === 'completed' && (
-            <Button size="small">Download</Button>
+          {record.status === 'completed' && record.result_file && (
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => handleDownload(record)}
+            >
+              Download
+            </Button>
           )}
           <Button size="small" danger onClick={() => removeTask(record.id)}>
             Remove

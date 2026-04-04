@@ -24,6 +24,7 @@ export function useTasks() {
           name: task.name,
           status: task.status,
           result: task.result_message,
+          result_file: task.result_file,
         });
       } else {
         addTask({
@@ -32,6 +33,7 @@ export function useTasks() {
           description: task.description,
           status: task.status,
           result: task.result_message,
+          result_file: task.result_file,
         });
       }
     });
