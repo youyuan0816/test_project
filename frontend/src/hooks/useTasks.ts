@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { api } from '@/services/api';
 import { useTaskStore } from '@/stores/taskStore';
 import type { Task } from '@/services/types';
@@ -37,9 +38,11 @@ export function useTasks() {
   };
 
   // Sync tasks to local store when query succeeds
-  if (query.data?.tasks) {
-    syncToLocalStore(query.data.tasks);
-  }
+  useEffect(() => {
+    if (query.data?.tasks) {
+      syncToLocalStore(query.data.tasks);
+    }
+  }, [query.data?.tasks]);
 
   return query;
 }
