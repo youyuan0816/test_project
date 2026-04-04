@@ -2,9 +2,9 @@ import os
 import sys
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, BaseModel
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,6 +28,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class DeletedTasksListResponse(BaseModel):
+    tasks: List[TaskResponse]
 
 
 def run_generate_excel(task_id: str, url: str, filepath: str, description: str, username: str, password: str, continue_excel: Optional[str]):
@@ -211,6 +215,50 @@ def get_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return TaskResponse(**task)
+
+
+@app.delete("/tasks/{task_id}", status_code=204)
+def delete_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """删除任务（软删除，只能删除 completed 或 failed 状态的任务）"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 检查任务状态，只能删除 completed 或 failed
+    if task["status"] not in (STATUS_COMPLETED, STATUS_FAILED):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete task in pending/running status"
+        )
+
+    task_db.soft_delete_task(task_id)
+    return None
+
+
+@app.get("/tasks/deleted", response_model=DeletedTasksListResponse)
+def get_deleted_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取已删除的任务列表（回收站）"""
+    tasks = task_db.get_deleted_tasks()
+    return DeletedTasksListResponse(tasks=tasks)
+
+
+@app.post("/tasks/{task_id}/restore", response_model=TaskResponse)
+def restore_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """恢复已删除的任务"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if task.get("deleted_at") is None:
+        raise HTTPException(status_code=400, detail="Task is not deleted")
+
+    success = task_db.restore_task(task_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 返回恢复后的任务
+    restored_task = task_db.get_task(task_id)
+    return TaskResponse(**restored_task)
 
 
 @app.get("/download/{task_id}")
