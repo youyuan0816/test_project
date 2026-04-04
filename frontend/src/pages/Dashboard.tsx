@@ -136,14 +136,9 @@ export function Dashboard() {
             <Card
               title={t('card.tasks')}
               extra={
-                <Space>
-                  <Button icon={<HistoryOutlined />} onClick={() => setShowUpload(!showUpload)}>
-                    {t('button.uploadExcel')}
-                  </Button>
-                  <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
-                    {t('button.newTask')}
-                  </Button>
-                </Space>
+                <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
+                  {t('button.newTask')}
+                </Button>
               }
             >
               <TaskList />
