@@ -92,7 +92,7 @@ class TaskDB:
     def update_task_phase(self, task_id: str, phase: str):
         """Update the phase of a task."""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("UPDATE tasks SET phase = ? WHERE id = ?", (phase, task_id))
+            conn.execute("UPDATE tasks SET phase = ? WHERE id = ? AND deleted_at IS NULL", (phase, task_id))
             conn.commit()
 
     def soft_delete_task(self, task_id: str) -> bool:
@@ -184,7 +184,7 @@ class TaskDB:
                 conn.execute("UPDATE tasks SET result_message = ? WHERE id = ?", (result_message, task_id))
 
             conn.execute(
-                "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?",
+                "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ? AND deleted_at IS NULL",
                 (status, completed_at, task_id)
             )
             conn.commit()
