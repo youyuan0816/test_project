@@ -37,7 +37,10 @@ export function TaskList() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const color = status === 'completed' ? 'green' : status === 'failed' ? 'red' : 'blue';
+        const color =
+          status === 'completed' ? 'green' :
+          status === 'failed' ? 'red' :
+          status === 'running' ? 'blue' : 'default';
         return <Tag color={color}>{status}</Tag>;
       },
     },
