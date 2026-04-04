@@ -4,7 +4,7 @@ from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
 
-def create_google_home_test_cases():
+def create_google_test_cases_v2():
     wb = openpyxl.Workbook()
 
     ws_cases = wb.active
@@ -60,7 +60,7 @@ def create_google_home_test_cases():
         ["URL", "https://www.google.com/"],
         ["登录账号", "无"],
         ["登录密码", "无"],
-        ["测试描述", "主页的所有功能"],
+        ["测试描述", "test"],
     ]
 
     for row_idx, row_data in enumerate(config_data, 1):
@@ -73,9 +73,9 @@ def create_google_home_test_cases():
     ws_config.column_dimensions['A'].width = 15
     ws_config.column_dimensions['B'].width = 40
 
-    wb.save(os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_cases/google.xlsx"))
-    print("测试用例已生成到: test_cases/google.xlsx")
+    wb.save(os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_cases/google2.xlsx"))
+    print("测试用例已生成到: test_cases/google2.xlsx")
 
 
 if __name__ == "__main__":
-    create_google_home_test_cases()
+    create_google_test_cases_v2()
