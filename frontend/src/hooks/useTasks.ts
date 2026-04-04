@@ -28,6 +28,7 @@ export function useTasks() {
         });
       } else {
         addTask({
+          id: task.id,  // Use backend's task.id
           name: task.name,
           url: task.url,
           description: task.description,
