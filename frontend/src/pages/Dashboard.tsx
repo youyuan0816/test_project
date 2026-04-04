@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu, Typography, Button, Card, Space, Table, Tag } from 'antd';
+import { Layout, Menu, Typography, Button, Card, Space, Table, Tag, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { DashboardOutlined, FileTextOutlined, HistoryOutlined } from '@ant-design/icons';
 import { TaskList } from '@/components/TaskList';
 import { NewTaskForm } from '@/components/NewTaskForm';
@@ -14,6 +15,7 @@ const { Title, Text } = Typography;
 type MenuKey = 'dashboard' | 'sessions' | 'testcases';
 
 export function Dashboard() {
+  const { t, i18n } = useTranslation();
   const [selectedMenu, setSelectedMenu] = useState<MenuKey>('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -170,10 +172,19 @@ export function Dashboard() {
       </Sider>
 
       <Layout>
-        <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#fff' }}>
+        <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#fff', justifyContent: 'space-between' }}>
           <Title level={4} style={{ margin: 0 }}>
             {menuItems.find(item => item.key === selectedMenu)?.label}
           </Title>
+          <Select
+            value={i18n.language}
+            onChange={(lng) => i18n.changeLanguage(lng)}
+            style={{ width: 100 }}
+            options={[
+              { value: 'zh', label: '中文' },
+              { value: 'en', label: 'English' },
+            ]}
+          />
         </Header>
 
         <Content style={{ padding: '24px', background: '#f0f2f5' }}>
