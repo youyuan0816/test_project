@@ -33,7 +33,7 @@ def get_session_id(excel_path):
     """获取 Excel 对应的 session ID"""
     sessions = load_sessions()
     entry = sessions.get(excel_path)
-    return entry["session_id"] if entry else None
+    return entry.get("session_id") if entry else None
 
 
 def save_session_id(excel_path, session_id):

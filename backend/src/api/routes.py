@@ -4,7 +4,7 @@ import threading
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,8 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import CORS_ORIGINS, PROJECT_ROOT
 from constants import PHASE_EXCEL, PHASE_CODE, STATUS_COMPLETED, STATUS_FAILED
 from api.models import GenerateRequest, ContinueRequest, TaskResponse, TasksListResponse, CreateTaskResponse
-from api.dependencies import get_task_db
-from db.database import get_task_db
+from api.dependencies import get_task_db_dep
+from db.database import get_task_db, TaskDB
 from services.generator import generate_excel, continue_session, list_sessions
 
 
@@ -50,14 +50,12 @@ def run_generate_excel(task_id: str, url: str, filepath: str, description: str, 
 
 
 @app.post("/generate", response_model=CreateTaskResponse)
-def generate_excel_api(req: GenerateRequest):
+def generate_excel_api(req: GenerateRequest, task_db: TaskDB = Depends(get_task_db_dep)):
     """生成 Excel 测试用例（后台异步执行）
 
     调用 generator.py 中的 generate_excel 函数，通过 OpenCode 生成测试用例 Excel
     立即返回 task_id，实际工作在后台执行
     """
-    task_db = get_task_db()
-
     # Create task
     task_id = task_db.create_task(
         name=req.filepath,
@@ -85,6 +83,7 @@ def generate_excel_api(req: GenerateRequest):
 def run_continue_session(task_id: str, excel_file: str):
     """Background worker for continue_session"""
     task_db = get_task_db()
+    task_db.update_task_phase(task_id, PHASE_CODE)
     try:
         task_db.update_task_status(task_id, "running")
         result = continue_session(excel_file)
@@ -96,14 +95,12 @@ def run_continue_session(task_id: str, excel_file: str):
 
 
 @app.post("/continue", response_model=CreateTaskResponse)
-def continue_session_api(req: ContinueRequest):
+def continue_session_api(req: ContinueRequest, task_db: TaskDB = Depends(get_task_db_dep)):
     """继续 session，读取 Excel 生成测试代码（后台异步执行）
 
     调用 generator.py 中的 continue_session 函数，通过 OpenCode 生成 pytest 测试代码
     立即返回 task_id，实际工作在后台执行
     """
-    task_db = get_task_db()
-
     # Create task
     task_id = task_db.create_task(
         name=req.excel_file,
@@ -128,7 +125,7 @@ def continue_session_api(req: ContinueRequest):
 
 
 @app.post("/upload/{task_id}")
-async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
+async def upload_excel_api(task_id: str, file: UploadFile = File(...), task_db: TaskDB = Depends(get_task_db_dep)):
     """上传 Excel 文件替换现有文件，并立即生成测试代码（后台异步执行）
 
     Args:
@@ -138,7 +135,6 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
     Returns:
         {"task_id": str, "status": str, "message": str}
     """
-    task_db = get_task_db()
 
     # Get the task
     task = task_db.get_task(task_id)
@@ -204,15 +200,13 @@ def get_sessions():
 
 
 @app.get("/tasks", response_model=TasksListResponse)
-def get_tasks():
-    task_db = get_task_db()
+def get_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
     tasks = task_db.list_tasks()
     return TasksListResponse(tasks=tasks)
 
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
-def get_task(task_id: str):
-    task_db = get_task_db()
+def get_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     task = task_db.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -220,9 +214,8 @@ def get_task(task_id: str):
 
 
 @app.get("/download/{task_id}")
-def download_task_file(task_id: str):
+def download_task_file(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     """Download the Excel file for a completed task"""
-    task_db = get_task_db()
     task = task_db.get_task(task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

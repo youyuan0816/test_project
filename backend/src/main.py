@@ -14,10 +14,10 @@ def main():
     args = parser.parse_args()
 
     if args.generate:
-        from generator import generate_excel
+        from services.generator import generate_excel
         generate_excel()
     elif args.continue_file:
-        from generator import continue_session
+        from services.generator import continue_session
         continue_session(args.continue_file)
     else:
         parser.print_help()
