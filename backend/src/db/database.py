@@ -147,7 +147,10 @@ class TaskDB:
 
     def get_task(self, task_id: str) -> Optional[dict]:
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+            cursor = conn.execute(
+                "SELECT * FROM tasks WHERE id = ? AND deleted_at IS NULL",
+                (task_id,)
+            )
             row = cursor.fetchone()
 
         if not row:
