@@ -174,7 +174,8 @@ export function Dashboard() {
           <Select
             value={i18n.language}
             onChange={(lng) => i18n.changeLanguage(lng)}
-            style={{ width: 100 }}
+            bordered={false}
+            style={{ width: 100, background: 'transparent' }}
             options={[
               { value: 'zh', label: '中文' },
               { value: 'en', label: 'English' },
