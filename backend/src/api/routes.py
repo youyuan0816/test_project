@@ -4,8 +4,9 @@ import sys
 import threading
 from pathlib import Path
 from typing import Optional, List
+from pydantic import BaseModel
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, BaseModel
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
