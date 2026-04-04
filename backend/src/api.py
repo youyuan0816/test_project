@@ -2,7 +2,7 @@ import sys
 import os
 import threading
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -150,6 +150,78 @@ def continue_session_api(req: ContinueRequest):
     return {"task_id": task_id, "status": "pending", "message": "Task created, processing in background"}
 
 
+@app.post("/upload/{task_id}")
+async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
+    """上传 Excel 文件替换现有文件，并立即生成测试代码（后台异步执行）
+
+    Args:
+        task_id: 任务 ID，用于获取 result_file 路径
+        file: 上传的 Excel 文件 (multipart/form-data)
+
+    Returns:
+        {"task_id": str, "status": str, "message": str}
+    """
+    # Get the task
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    result_file = task.get("result_file")
+    if not result_file:
+        raise HTTPException(status_code=400, detail="Task has no result_file")
+
+    # Security check: ensure result_file is within test_cases/ directory
+    normalized = os.path.normpath(result_file.replace('/', os.sep))
+    if ".." in normalized or not normalized.startswith("test_cases"):
+        raise HTTPException(status_code=400, detail="Invalid result_file path")
+
+    # If result_file is a directory, find the existing .xlsx file inside
+    base_dir = os.path.join(PROJECT_ROOT, normalized)
+    if os.path.isdir(base_dir):
+        for f in os.listdir(base_dir):
+            if f.endswith('.xlsx'):
+                base_dir = os.path.join(base_dir, f)
+                break
+        else:
+            raise HTTPException(status_code=404, detail="No xlsx file found in task's result directory")
+
+    # Validate uploaded file is an Excel file
+    if not file.filename.endswith('.xlsx'):
+        raise HTTPException(status_code=400, detail="Only .xlsx files are allowed")
+
+    # Write uploaded file to replace existing Excel
+    try:
+        content = await file.read()
+        with open(base_dir, 'wb') as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {str(e)}")
+
+    # Create a new task for generating test code
+    new_task_id = task_db.create_task(
+        name=os.path.basename(base_dir),
+        task_type="continue_session",
+        url=task.get("url", ""),
+        description=task.get("description", ""),
+    )
+
+    # Start background worker to generate test code
+    # Use relative path from PROJECT_ROOT for continue_session
+    excel_relative = os.path.relpath(base_dir, PROJECT_ROOT)
+    excel_relative = excel_relative.replace(os.sep, '/')
+    thread = threading.Thread(
+        target=run_continue_session,
+        args=(new_task_id, excel_relative)
+    )
+    thread.start()
+
+    return {
+        "task_id": new_task_id,
+        "status": "pending",
+        "message": "File uploaded and test code generation started in background"
+    }
+
+
 @app.get("/sessions")
 def get_sessions():
     """获取所有保存的 session 列表"""
@@ -186,16 +258,26 @@ def download_task_file(task_id: str):
         raise HTTPException(status_code=404, detail="No file associated with this task")
 
     # Security check: ensure file is within test_cases/ directory
-    normalized = os.path.normpath(result_file)
+    # Normalize path separators for Windows compatibility
+    normalized = os.path.normpath(result_file.replace('/', os.sep))
     if ".." in normalized or not normalized.startswith("test_cases"):
         raise HTTPException(status_code=400, detail="Invalid file path")
 
-    full_path = os.path.join(PROJECT_ROOT, result_file)
+    full_path = os.path.join(PROJECT_ROOT, normalized)
+
+    # If path is a directory, find the xlsx file inside
+    if os.path.isdir(full_path):
+        for f in os.listdir(full_path):
+            if f.endswith('.xlsx'):
+                full_path = os.path.join(full_path, f)
+                break
+        else:
+            raise HTTPException(status_code=404, detail="No xlsx file found in directory")
 
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found on disk")
 
-    filename = os.path.basename(result_file)
+    filename = os.path.basename(full_path)
     return FileResponse(
         path=full_path,
         filename=filename,
