@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import { useTaskStore } from '@/stores/taskStore';
 import { Upload, Button, Space } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 
@@ -11,11 +10,11 @@ interface UploadExcelProps {
 
 export function UploadExcel({ onClose }: UploadExcelProps) {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const { addTask } = useTaskStore();
 
   const mutation = useMutation({
     mutationFn: api.continueSession,
-    onSuccess: (_data, _variables) => {
+    onSuccess: () => {
+      // Task will be synced from backend via useTasks polling
       onClose();
     },
     onError: (error) => {
@@ -29,13 +28,7 @@ export function UploadExcel({ onClose }: UploadExcelProps) {
     const file = fileList[0];
     const filepath = `test_cases/${file.name}`;
 
-    addTask({
-      name: file.name,
-      url: '',
-      description: 'Continue session from Excel',
-      status: 'running',
-    });
-
+    // Call mutation - task will be synced from backend via useTasks polling
     mutation.mutate({ excel_file: filepath });
   };
 
