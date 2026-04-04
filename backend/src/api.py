@@ -197,26 +197,20 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {str(e)}")
 
-    # Create a new task for generating test code
-    new_task_id = task_db.create_task(
-        name=os.path.basename(base_dir),
-        task_type="continue_session",
-        url=task.get("url", ""),
-        description=task.get("description", ""),
-    )
+    # Start background worker to generate test code using SAME task_id
+    task_db.update_task_status(task_id, "running")
 
-    # Start background worker to generate test code
     # Use relative path from PROJECT_ROOT for continue_session
     excel_relative = os.path.relpath(base_dir, PROJECT_ROOT)
     excel_relative = excel_relative.replace(os.sep, '/')
     thread = threading.Thread(
         target=run_continue_session,
-        args=(new_task_id, excel_relative)
+        args=(task_id, excel_relative)
     )
     thread.start()
 
     return {
-        "task_id": new_task_id,
+        "task_id": task_id,
         "status": "pending",
         "message": "File uploaded and test code generation started in background"
     }
