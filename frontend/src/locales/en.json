@@ -1,13 +1,15 @@
 {
   "common": {
-    "action": "Action"
+    "action": "Action",
+    "close": "Close"
   },
   "header": {
     "title": "UI Test Generator"
   },
   "nav": {
     "dashboard": "Dashboard",
-    "sessions": "Sessions"
+    "sessions": "Sessions",
+    "testcases": "Test Cases"
   },
   "task": {
     "name": "Name",
@@ -31,7 +33,8 @@
   },
   "button": {
     "newTask": "New Task",
-    "uploadExcel": "Upload Excel"
+    "uploadExcel": "Upload Excel",
+    "close": "Close"
   },
   "form": {
     "url": "URL",
@@ -47,5 +50,22 @@
     "generateFailed": "Generate failed",
     "taskCreated": "Task created successfully",
     "noTasks": "No tasks yet. Create a new task to get started."
+  },
+  "card": {
+    "newTask": "New Task",
+    "continueSession": "Continue Session",
+    "tasks": "Tasks",
+    "sessions": "Sessions",
+    "testCases": "Test Cases",
+    "generateExcelDesc": "Generate Excel test cases from a website",
+    "uploadExcelDesc": "Upload Excel to continue generating test code",
+    "noSessions": "No sessions found",
+    "viewTestCases": "View and manage your test cases"
+  },
+  "session": {
+    "excelFile": "Excel File",
+    "sessionId": "Session ID",
+    "createdAt": "Created At",
+    "lastUsed": "Last Used"
   }
 }

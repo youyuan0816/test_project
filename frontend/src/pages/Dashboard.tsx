@@ -40,17 +40,17 @@ export function Dashboard() {
     {
       key: 'dashboard' as MenuKey,
       icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      label: t('nav.dashboard'),
     },
     {
       key: 'sessions' as MenuKey,
       icon: <HistoryOutlined />,
-      label: 'Sessions',
+      label: t('nav.sessions'),
     },
     {
       key: 'testcases' as MenuKey,
       icon: <FileTextOutlined />,
-      label: 'Test Cases',
+      label: t('nav.testcases'),
     },
   ];
 
@@ -58,9 +58,9 @@ export function Dashboard() {
     switch (selectedMenu) {
       case 'sessions':
         return (
-          <Card title="Sessions" loading={sessionsLoading}>
+          <Card title={t('card.sessions')} loading={sessionsLoading}>
             {Object.keys(sessions).length === 0 && !sessionsLoading ? (
-              <Text type="secondary">No sessions found</Text>
+              <Text type="secondary">{t('card.noSessions')}</Text>
             ) : (
               <Table
                 dataSource={Object.entries(sessions).map(([key, session]) => ({
@@ -72,23 +72,23 @@ export function Dashboard() {
                 }))}
                 columns={[
                   {
-                    title: 'Excel File',
+                    title: t('session.excelFile'),
                     dataIndex: 'filename',
                     key: 'filename',
                   },
                   {
-                    title: 'Session ID',
+                    title: t('session.sessionId'),
                     dataIndex: 'sessionId',
                     key: 'sessionId',
                     render: (text) => <Tag>{text}</Tag>,
                   },
                   {
-                    title: 'Created At',
+                    title: t('session.createdAt'),
                     dataIndex: 'createdAt',
                     key: 'createdAt',
                   },
                   {
-                    title: 'Last Used',
+                    title: t('session.lastUsed'),
                     dataIndex: 'lastUsed',
                     key: 'lastUsed',
                   },
@@ -100,8 +100,8 @@ export function Dashboard() {
         );
       case 'testcases':
         return (
-          <Card title="Test Cases">
-            <Text type="secondary">View and manage your test cases</Text>
+          <Card title={t('card.testCases')}>
+            <Text type="secondary">{t('card.viewTestCases')}</Text>
           </Card>
         );
       default:
@@ -109,11 +109,11 @@ export function Dashboard() {
           <>
             {showNewTask && (
               <Card
-                title="New Task"
-                extra={<Button onClick={() => setShowNewTask(false)}>Close</Button>}
+                title={t('card.newTask')}
+                extra={<Button onClick={() => setShowNewTask(false)}>{t('button.close')}</Button>}
                 style={{ marginBottom: 16 }}
               >
-                <Text type="secondary">Generate Excel test cases from a website</Text>
+                <Text type="secondary">{t('card.generateExcelDesc')}</Text>
                 <div style={{ marginTop: 16 }}>
                   <NewTaskForm onClose={() => setShowNewTask(false)} />
                 </div>
@@ -122,11 +122,11 @@ export function Dashboard() {
 
             {showUpload && (
               <Card
-                title="Continue Session"
-                extra={<Button onClick={() => setShowUpload(false)}>Close</Button>}
+                title={t('card.continueSession')}
+                extra={<Button onClick={() => setShowUpload(false)}>{t('button.close')}</Button>}
                 style={{ marginBottom: 16 }}
               >
-                <Text type="secondary">Upload Excel to continue generating test code</Text>
+                <Text type="secondary">{t('card.uploadExcelDesc')}</Text>
                 <div style={{ marginTop: 16 }}>
                   <UploadExcel onClose={() => setShowUpload(false)} />
                 </div>
@@ -134,14 +134,14 @@ export function Dashboard() {
             )}
 
             <Card
-              title="Tasks"
+              title={t('card.tasks')}
               extra={
                 <Space>
                   <Button icon={<HistoryOutlined />} onClick={() => setShowUpload(!showUpload)}>
-                    Upload Excel
+                    {t('button.uploadExcel')}
                   </Button>
                   <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
-                    New Task
+                    {t('button.newTask')}
                   </Button>
                 </Space>
               }
@@ -158,7 +158,7 @@ export function Dashboard() {
       <Sider width={200} style={{ background: '#001529' }}>
         <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Title level={4} style={{ color: 'white', margin: 0 }}>
-            UI Test
+            {t('header.title')}
           </Title>
         </div>
         <Menu
