@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import sys
 import threading
 from pathlib import Path
@@ -245,18 +246,23 @@ def get_deleted_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
 @app.post("/tasks/{task_id}/restore", response_model=TaskResponse)
 def restore_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     """恢复已删除的任务"""
-    task = task_db.get_task(task_id)
-    if not task:
+    # First check if task exists at all (including deleted)
+    with sqlite3.connect(task_db.db_path) as conn:
+        cursor = conn.execute("SELECT id, deleted_at FROM tasks WHERE id = ?", (task_id,))
+        row = cursor.fetchone()
+
+    if not row:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if task.get("deleted_at") is None:
+    # Check if task is actually deleted
+    if row[1] is None:  # deleted_at is None means not deleted
         raise HTTPException(status_code=400, detail="Task is not deleted")
 
+    # Restore the task
     success = task_db.restore_task(task_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=500, detail="Failed to restore task")
 
-    # 返回恢复后的任务
     restored_task = task_db.get_task(task_id)
     return TaskResponse(**restored_task)
 
