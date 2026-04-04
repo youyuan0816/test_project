@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { Table, Tag, Button, Space, Upload, message } from 'antd';
+import { Table, Tag, Button, Dropdown, Upload, message } from 'antd';
+import type { MenuProps } from 'antd';
 import { api } from '@/services/api';
 import type { ColumnsType } from 'antd/es/table';
+import type { UploadFile } from 'antd/es/upload/interface';
 
 interface TaskData {
   id: string;
@@ -19,6 +21,8 @@ export function TaskList() {
   const { tasks, removeTask } = useTaskStore();
   const [uploadingTasks, setUploadingTasks] = useState<Set<string>>(new Set());
   const [generatingTasks, setGeneratingTasks] = useState<Set<string>>(new Set());
+  const [uploadTargetTask, setUploadTargetTask] = useState<TaskData | null>(null);
+  const uploadRef = useRef<any>(null);
 
   const handleDownload = (task: TaskData) => {
     if (task.result_file) {
@@ -56,6 +60,56 @@ export function TaskList() {
         next.delete(task.id);
         return next;
       });
+    }
+  };
+
+  const handleMenuClick = (key: string, record: TaskData) => {
+    switch (key) {
+      case 'download':
+        handleDownload(record);
+        break;
+      case 'upload':
+        setUploadTargetTask(record);
+        // Trigger the hidden upload input
+        uploadRef.current?.click();
+        break;
+      case 'generate':
+        handleGenerate(record);
+        break;
+      case 'remove':
+        removeTask(record.id);
+        break;
+    }
+  };
+
+  const getActionItems = (record: TaskData): MenuProps['items'] => [
+    {
+      key: 'download',
+      label: 'Download',
+      disabled: !record.result_file,
+    },
+    {
+      key: 'upload',
+      label: 'Upload Excel',
+      disabled: !record.result_file || uploadingTasks.has(record.id),
+    },
+    {
+      key: 'generate',
+      label: 'Generate Code',
+      disabled: !record.result_file || generatingTasks.has(record.id),
+    },
+    { type: 'divider' as const },
+    {
+      key: 'remove',
+      label: 'Remove',
+      danger: true,
+    },
+  ];
+
+  const handleUploadChange = (info: { file: UploadFile }) => {
+    if (uploadTargetTask && info.file.originFileObj) {
+      handleUpload(uploadTargetTask, info.file.originFileObj);
+      setUploadTargetTask(null);
     }
   };
 
@@ -98,56 +152,38 @@ export function TaskList() {
       title: 'Action',
       key: 'action',
       render: (_: unknown, record: TaskData) => (
-        <Space>
-          {record.status === 'completed' && record.result_file && (
-            <>
-              <Upload
-                accept=".xlsx"
-                showUploadList={false}
-                beforeUpload={(file) => {
-                  handleUpload(record, file);
-                  return false;
-                }}
-                disabled={uploadingTasks.has(record.id)}
-              >
-                <Button size="small" loading={uploadingTasks.has(record.id)}>
-                  Upload Excel
-                </Button>
-              </Upload>
-              <Button
-                size="small"
-                onClick={() => handleGenerate(record)}
-                disabled={!record.result_file}
-                loading={generatingTasks.has(record.id)}
-              >
-                Generate Code
-              </Button>
-            </>
-          )}
-          {record.status === 'completed' && record.result_file && (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => handleDownload(record)}
-            >
-              Download
-            </Button>
-          )}
-          <Button size="small" danger onClick={() => removeTask(record.id)}>
-            Remove
+        <Dropdown
+          menu={{
+            items: getActionItems(record),
+            onClick: ({ key }) => handleMenuClick(key, record),
+          }}
+          trigger={['click']}
+        >
+          <Button size="small">
+            操作
           </Button>
-        </Space>
+        </Dropdown>
       ),
     },
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={tasks}
-      rowKey="id"
-      pagination={false}
-      locale={{ emptyText: 'No tasks yet. Create a new task to get started.' }}
-    />
+    <>
+      <Upload
+        ref={uploadRef}
+        accept=".xlsx"
+        showUploadList={false}
+        beforeUpload={() => false}
+        onChange={handleUploadChange}
+        style={{ display: 'none' }}
+      />
+      <Table
+        columns={columns}
+        dataSource={tasks}
+        rowKey="id"
+        pagination={false}
+        locale={{ emptyText: 'No tasks yet. Create a new task to get started.' }}
+      />
+    </>
   );
 }
