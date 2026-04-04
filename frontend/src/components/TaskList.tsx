@@ -43,9 +43,10 @@ export function TaskList() {
   };
 
   const handleGenerate = async (task: TaskData) => {
+    if (!task.result_file) return;
     setGeneratingTasks(prev => new Set(prev).add(task.id));
     try {
-      await api.continueSession({ excel_file: task.result_file! });
+      await api.continueSession({ excel_file: task.result_file });
       message.success('Generating code...');
     } catch (error) {
       message.error('Generate failed: ' + (error as Error).message);
