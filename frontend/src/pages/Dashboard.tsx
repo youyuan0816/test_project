@@ -1,64 +1,130 @@
 import { useState } from 'react';
-import { Layout, Typography, Button, Card, Space } from 'antd';
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { Layout, Menu, Typography, Button, Card, Space } from 'antd';
+import { DashboardOutlined, FileTextOutlined, HistoryOutlined } from '@ant-design/icons';
 import { TaskList } from '@/components/TaskList';
 import { NewTaskForm } from '@/components/NewTaskForm';
 import { UploadExcel } from '@/components/UploadExcel';
 
-const { Header, Content } = Layout;
+const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
+type MenuKey = 'dashboard' | 'sessions' | 'testcases';
+
 export function Dashboard() {
+  const [selectedMenu, setSelectedMenu] = useState<MenuKey>('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
+  const menuItems = [
+    {
+      key: 'dashboard' as MenuKey,
+      icon: <DashboardOutlined />,
+      label: 'Dashboard',
+    },
+    {
+      key: 'sessions' as MenuKey,
+      icon: <HistoryOutlined />,
+      label: 'Sessions',
+    },
+    {
+      key: 'testcases' as MenuKey,
+      icon: <FileTextOutlined />,
+      label: 'Test Cases',
+    },
+  ];
+
+  const renderContent = () => {
+    switch (selectedMenu) {
+      case 'sessions':
+        return (
+          <Card title="Sessions">
+            <Text type="secondary">Manage your OpenCode sessions here</Text>
+          </Card>
+        );
+      case 'testcases':
+        return (
+          <Card title="Test Cases">
+            <Text type="secondary">View and manage your test cases</Text>
+          </Card>
+        );
+      default:
+        return (
+          <>
+            {showNewTask && (
+              <Card
+                title="New Task"
+                extra={<Button onClick={() => setShowNewTask(false)}>Close</Button>}
+                style={{ marginBottom: 16 }}
+              >
+                <Text type="secondary">Generate Excel test cases from a website</Text>
+                <div style={{ marginTop: 16 }}>
+                  <NewTaskForm onClose={() => setShowNewTask(false)} />
+                </div>
+              </Card>
+            )}
+
+            {showUpload && (
+              <Card
+                title="Continue Session"
+                extra={<Button onClick={() => setShowUpload(false)}>Close</Button>}
+                style={{ marginBottom: 16 }}
+              >
+                <Text type="secondary">Upload Excel to continue generating test code</Text>
+                <div style={{ marginTop: 16 }}>
+                  <UploadExcel onClose={() => setShowUpload(false)} />
+                </div>
+              </Card>
+            )}
+
+            <Card
+              title="Tasks"
+              extra={
+                <Space>
+                  <Button icon={<HistoryOutlined />} onClick={() => setShowUpload(!showUpload)}>
+                    Upload Excel
+                  </Button>
+                  <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
+                    New Task
+                  </Button>
+                </Space>
+              }
+            >
+              <TaskList />
+            </Card>
+          </>
+        );
+    }
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px' }}>
-        <Title level={3} style={{ color: 'white', margin: 0 }}>
-          UI Test Generator
-        </Title>
-        <Space>
-          <Button icon={<UploadOutlined />} onClick={() => setShowUpload(!showUpload)}>
-            Upload Excel
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
-            New Task
-          </Button>
-        </Space>
-      </Header>
+      <Sider width={200} style={{ background: '#001529' }}>
+        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Title level={4} style={{ color: 'white', margin: 0 }}>
+            UI Test
+          </Title>
+        </div>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[selectedMenu]}
+          onClick={({ key }) => setSelectedMenu(key as MenuKey)}
+          items={menuItems}
+          style={{ borderRight: 0 }}
+        />
+      </Sider>
 
-      <Content style={{ padding: '24px' }}>
-        {showNewTask && (
-          <Card
-            title="New Task"
-            extra={<Button onClick={() => setShowNewTask(false)}>Close</Button>}
-            style={{ marginBottom: 16 }}
-          >
-            <Text type="secondary">Generate Excel test cases from a website</Text>
-            <div style={{ marginTop: 16 }}>
-              <NewTaskForm onClose={() => setShowNewTask(false)} />
-            </div>
-          </Card>
-        )}
+      <Layout>
+        <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#fff' }}>
+          <Title level={4} style={{ margin: 0 }}>
+            {menuItems.find(item => item.key === selectedMenu)?.label}
+          </Title>
+        </Header>
 
-        {showUpload && (
-          <Card
-            title="Continue Session"
-            extra={<Button onClick={() => setShowUpload(false)}>Close</Button>}
-            style={{ marginBottom: 16 }}
-          >
-            <Text type="secondary">Upload Excel to continue generating test code</Text>
-            <div style={{ marginTop: 16 }}>
-              <UploadExcel onClose={() => setShowUpload(false)} />
-            </div>
-          </Card>
-        )}
-
-        <Card title="Tasks">
-          <TaskList />
-        </Card>
-      </Content>
+        <Content style={{ padding: '24px', background: '#f0f2f5' }}>
+          {renderContent()}
+        </Content>
+      </Layout>
     </Layout>
   );
 }
