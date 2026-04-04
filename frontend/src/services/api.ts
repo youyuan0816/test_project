@@ -17,9 +17,7 @@ export const api = {
   uploadExcel: async (taskId: string, file: File): Promise<CreateTaskResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await axios.post(`${API_BASE}/upload/${taskId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await axios.post(`${API_BASE}/upload/${taskId}`, formData);
     return response.data;
   },
 
