@@ -1,4 +1,7 @@
 {
+  "common": {
+    "action": "Action"
+  },
   "header": {
     "title": "UI Test Generator"
   },
@@ -11,7 +14,7 @@
     "url": "URL",
     "description": "Description",
     "status": "Status",
-    "created": "Created",
+    "createdAt": "Created",
     "action": "Action"
   },
   "status": {
@@ -40,8 +43,9 @@
   "message": {
     "uploadSuccess": "File uploaded, generating code...",
     "uploadFailed": "Upload failed",
-    "generateSuccess": "Generating code...",
+    "generatingCode": "Generating code...",
     "generateFailed": "Generate failed",
-    "taskCreated": "Task created successfully"
+    "taskCreated": "Task created successfully",
+    "noTasks": "No tasks yet. Create a new task to get started."
   }
 }
