@@ -81,27 +81,31 @@ def generate_excel_api(req: GenerateRequest):
     # Update to running
     task_db.update_task_status(task_id, "running")
 
-    result = generate_excel(
-        url=req.url,
-        filepath=req.filepath,
-        description=req.description,
-        username=req.username or "",
-        password=req.password or "",
-        continue_excel=req.continue_excel
-    )
+    try:
+        result = generate_excel(
+            url=req.url,
+            filepath=req.filepath,
+            description=req.description,
+            username=req.username or "",
+            password=req.password or "",
+            continue_excel=req.continue_excel
+        )
 
-    # Update final status
-    status = "completed" if result["status"] == "success" else "failed"
-    task_db.update_task_status(
-        task_id,
-        status,
-        result_message=result["message"]
-    )
+        # Update final status
+        status = "completed" if result["status"] == "success" else "failed"
+        task_db.update_task_status(
+            task_id,
+            status,
+            result_message=result["message"]
+        )
 
-    if result["status"] == "error":
-        raise HTTPException(status_code=400, detail=result["message"])
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result["message"])
 
-    return {"task_id": task_id, "status": status, "message": result["message"]}
+        return {"task_id": task_id, "status": status, "message": result["message"]}
+    except Exception as e:
+        task_db.update_task_status(task_id, "failed", result_message=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/continue")
@@ -122,20 +126,24 @@ def continue_session_api(req: ContinueRequest):
     # Update to running
     task_db.update_task_status(task_id, "running")
 
-    result = continue_session(req.excel_file)
+    try:
+        result = continue_session(req.excel_file)
 
-    # Update final status
-    status = "completed" if result["status"] == "success" else "failed"
-    task_db.update_task_status(
-        task_id,
-        status,
-        result_message=result["message"]
-    )
+        # Update final status
+        status = "completed" if result["status"] == "success" else "failed"
+        task_db.update_task_status(
+            task_id,
+            status,
+            result_message=result["message"]
+        )
 
-    if result["status"] == "error":
-        raise HTTPException(status_code=400, detail=result["message"])
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result["message"])
 
-    return {"task_id": task_id, "status": status, "message": result["message"]}
+        return {"task_id": task_id, "status": status, "message": result["message"]}
+    except Exception as e:
+        task_db.update_task_status(task_id, "failed", result_message=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/sessions")
