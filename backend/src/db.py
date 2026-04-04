@@ -9,7 +9,7 @@ DEFAULT_DB_PATH = os.path.join(os.path.dirname(__file__), "..", "tasks.db")
 # Column names for tasks table (in order)
 TASK_COLUMNS = [
     "id", "name", "task_type", "url", "description",
-    "status", "session_id", "result_file", "result_message",
+    "status", "phase", "session_id", "result_file", "result_message",
     "created_at", "completed_at"
 ]
 
@@ -20,6 +20,10 @@ class TaskDB:
     STATUS_RUNNING = "running"
     STATUS_COMPLETED = "completed"
     STATUS_FAILED = "failed"
+
+    # Phase constants
+    PHASE_EXCEL = "excel_generation"
+    PHASE_CODE = "code_generation"
 
     # Retention constant
     TASK_RETENTION_DAYS = 30
@@ -38,6 +42,7 @@ class TaskDB:
                     url TEXT DEFAULT '',
                     description TEXT DEFAULT '',
                     status TEXT NOT NULL DEFAULT 'pending',
+                    phase TEXT NOT NULL DEFAULT 'excel_generation',
                     session_id TEXT,
                     result_file TEXT,
                     result_message TEXT,
@@ -46,12 +51,28 @@ class TaskDB:
                 )
             """)
             conn.commit()
+        self._migrate_phase()
         self._cleanup_old_tasks()
 
     def _cleanup_old_tasks(self):
         cutoff = (datetime.now() - timedelta(days=self.TASK_RETENTION_DAYS)).isoformat()
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("DELETE FROM tasks WHERE created_at < ?", (cutoff,))
+            conn.commit()
+
+    def _migrate_phase(self):
+        """Add phase column if it doesn't exist (for existing databases)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("PRAGMA table_info(tasks)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "phase" not in columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN phase TEXT NOT NULL DEFAULT 'excel_generation'")
+                conn.commit()
+
+    def update_task_phase(self, task_id: str, phase: str):
+        """Update the phase of a task."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("UPDATE tasks SET phase = ? WHERE id = ?", (phase, task_id))
             conn.commit()
 
     def _row_to_dict(self, row):
