@@ -211,6 +211,13 @@ def get_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
     return TasksListResponse(tasks=tasks)
 
 
+@app.get("/tasks/deleted", response_model=DeletedTasksListResponse)
+def get_deleted_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取已删除的任务列表（回收站）"""
+    tasks = task_db.get_deleted_tasks()
+    return DeletedTasksListResponse(tasks=tasks)
+
+
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     task = task_db.get_task(task_id)
@@ -235,13 +242,6 @@ def delete_task(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
 
     task_db.soft_delete_task(task_id)
     return None
-
-
-@app.get("/tasks/deleted", response_model=DeletedTasksListResponse)
-def get_deleted_tasks(task_db: TaskDB = Depends(get_task_db_dep)):
-    """获取已删除的任务列表（回收站）"""
-    tasks = task_db.get_deleted_tasks()
-    return DeletedTasksListResponse(tasks=tasks)
 
 
 @app.post("/tasks/{task_id}/restore", response_model=TaskResponse)

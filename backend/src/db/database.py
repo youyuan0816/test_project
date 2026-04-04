@@ -15,11 +15,11 @@ from constants import (
 )
 from config import TASK_DB_PATH
 
-# Column names for tasks table (in order)
+# Column names for tasks table (in order - must match actual DB schema)
 TASK_COLUMNS = [
     "id", "name", "task_type", "url", "description",
-    "status", "phase", "session_id", "result_file", "result_message",
-    "created_at", "completed_at", "deleted_at"
+    "status", "session_id", "result_file", "result_message",
+    "created_at", "completed_at", "phase", "deleted_at"
 ]
 
 # Singleton instance

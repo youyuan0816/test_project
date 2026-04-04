@@ -22,7 +22,7 @@ class TaskResponse(BaseModel):
     url: str
     description: str
     status: str
-    phase: str
+    phase: Optional[str]
     session_id: Optional[str]
     result_file: Optional[str]
     result_message: Optional[str]
