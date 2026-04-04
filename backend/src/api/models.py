@@ -28,6 +28,7 @@ class TaskResponse(BaseModel):
     result_message: Optional[str]
     created_at: str
     completed_at: Optional[str]
+    deleted_at: Optional[str]
 
 
 class TasksListResponse(BaseModel):
