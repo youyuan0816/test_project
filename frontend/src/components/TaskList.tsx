@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { Table, Tag, Button, Dropdown, Upload, message } from 'antd';
+import { Table, Tag, Button, Dropdown, Upload, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import { api } from '@/services/api';
 import type { ColumnsType } from 'antd/es/table';
@@ -13,6 +13,7 @@ interface TaskData {
   url: string;
   description: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
+  phase?: 'excel_generation' | 'code_generation';
   createdAt: string;
   result?: string;
   result_file?: string;
@@ -136,12 +137,20 @@ export function TaskList() {
       title: t('task.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => {
-        const color =
+      render: (status: string, record: TaskData) => {
+        const phase = record.phase || 'excel_generation';
+        const phaseColor = phase === 'excel_generation' ? 'blue' : 'purple';
+        const statusColor =
           status === 'completed' ? 'green' :
           status === 'failed' ? 'red' :
-          status === 'running' ? 'blue' : 'default';
-        return <Tag color={color}>{t(`status.${status}`)}</Tag>;
+          status === 'running' ? phaseColor : 'default';
+
+        return (
+          <Space>
+            <Tag color={phaseColor}>{t(`phase.${phase}`)}</Tag>
+            <Tag color={statusColor}>{t(`status.${status}`)}</Tag>
+          </Space>
+        );
       },
     },
     {
