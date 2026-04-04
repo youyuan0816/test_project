@@ -67,5 +67,9 @@
     "sessionId": "会话 ID",
     "createdAt": "创建时间",
     "lastUsed": "最后使用"
+  },
+  "phase": {
+    "excel_generation": "Excel生成中",
+    "code_generation": "代码生成中"
   }
 }

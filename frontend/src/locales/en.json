@@ -67,5 +67,9 @@
     "sessionId": "Session ID",
     "createdAt": "Created At",
     "lastUsed": "Last Used"
+  },
+  "phase": {
+    "excel_generation": "Generating Excel",
+    "code_generation": "Generating Code"
   }
 }
