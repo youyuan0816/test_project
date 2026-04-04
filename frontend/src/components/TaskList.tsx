@@ -5,6 +5,7 @@ import type { MenuProps } from 'antd';
 import { api } from '@/services/api';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadFile } from 'antd/es/upload/interface';
+import { useTranslation } from 'react-i18next';
 
 interface TaskData {
   id: string;
@@ -18,6 +19,7 @@ interface TaskData {
 }
 
 export function TaskList() {
+  const { t } = useTranslation();
   const { tasks, removeTask } = useTaskStore();
   const [uploadingTasks, setUploadingTasks] = useState<Set<string>>(new Set());
   const [generatingTasks, setGeneratingTasks] = useState<Set<string>>(new Set());
@@ -34,9 +36,9 @@ export function TaskList() {
     setUploadingTasks(prev => new Set(prev).add(task.id));
     try {
       await api.uploadExcel(task.id, file);
-      message.success('File uploaded, generating code...');
+      message.success(t('message.uploadSuccess'));
     } catch (error) {
-      message.error('Upload failed: ' + (error as Error).message);
+      message.error(t('message.uploadFailed', { error: (error as Error).message }));
     } finally {
       setUploadingTasks(prev => {
         const next = new Set(prev);
@@ -51,9 +53,9 @@ export function TaskList() {
     setGeneratingTasks(prev => new Set(prev).add(task.id));
     try {
       await api.continueSession({ excel_file: task.result_file });
-      message.success('Generating code...');
+      message.success(t('message.generatingCode'));
     } catch (error) {
-      message.error('Generate failed: ' + (error as Error).message);
+      message.error(t('message.generateFailed', { error: (error as Error).message }));
     } finally {
       setGeneratingTasks(prev => {
         const next = new Set(prev);
@@ -85,23 +87,23 @@ export function TaskList() {
   const getActionItems = (record: TaskData): MenuProps['items'] => [
     {
       key: 'download',
-      label: 'Download',
+      label: t('action.download'),
       disabled: !record.result_file,
     },
     {
       key: 'upload',
-      label: 'Upload Excel',
+      label: t('action.upload'),
       disabled: !record.result_file || uploadingTasks.has(record.id),
     },
     {
       key: 'generate',
-      label: 'Generate Code',
+      label: t('action.generate'),
       disabled: !record.result_file || generatingTasks.has(record.id),
     },
     { type: 'divider' as const },
     {
       key: 'remove',
-      label: 'Remove',
+      label: t('action.remove'),
       danger: true,
     },
   ];
@@ -115,23 +117,23 @@ export function TaskList() {
 
   const columns: ColumnsType<TaskData> = [
     {
-      title: 'Name',
+      title: t('task.name'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'URL',
+      title: t('task.url'),
       dataIndex: 'url',
       key: 'url',
       render: (url: string) => url || '-',
     },
     {
-      title: 'Description',
+      title: t('task.description'),
       dataIndex: 'description',
       key: 'description',
     },
     {
-      title: 'Status',
+      title: t('task.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
@@ -139,17 +141,17 @@ export function TaskList() {
           status === 'completed' ? 'green' :
           status === 'failed' ? 'red' :
           status === 'running' ? 'blue' : 'default';
-        return <Tag color={color}>{status}</Tag>;
+        return <Tag color={color}>{t(`status.${status}`)}</Tag>;
       },
     },
     {
-      title: 'Created',
+      title: t('task.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
-      title: 'Action',
+      title: t('common.action'),
       key: 'action',
       render: (_: unknown, record: TaskData) => (
         <Dropdown
@@ -160,7 +162,7 @@ export function TaskList() {
           trigger={['click']}
         >
           <Button type="text" size="small">
-            操作
+            {t('common.action')}
           </Button>
         </Dropdown>
       ),
@@ -182,7 +184,7 @@ export function TaskList() {
         dataSource={tasks}
         rowKey="id"
         pagination={false}
-        locale={{ emptyText: 'No tasks yet. Create a new task to get started.' }}
+        locale={{ emptyText: t('message.noTasks') }}
       />
     </>
   );
