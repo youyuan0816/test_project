@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { api } from '@/services/api';
 import { useTaskStore } from '@/stores/taskStore';
 import { Form, Input, Button, Space } from 'antd';
@@ -9,6 +10,7 @@ interface NewTaskFormProps {
 
 export function NewTaskForm({ onClose }: NewTaskFormProps) {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const { addTask } = useTaskStore();
 
   const mutation = useMutation({
@@ -21,6 +23,7 @@ export function NewTaskForm({ onClose }: NewTaskFormProps) {
         status: 'completed',
         result: data.message,
       });
+      navigate('/');
       onClose();
     },
     onError: (error) => {
