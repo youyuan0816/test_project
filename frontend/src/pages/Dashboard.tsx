@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Layout, Menu, Typography, Button, Card, Space } from 'antd';
+import { useState, useEffect } from 'react';
+import { Layout, Menu, Typography, Button, Card, Space, Table, Tag } from 'antd';
 import { DashboardOutlined, FileTextOutlined, HistoryOutlined } from '@ant-design/icons';
 import { TaskList } from '@/components/TaskList';
 import { NewTaskForm } from '@/components/NewTaskForm';
 import { UploadExcel } from '@/components/UploadExcel';
+import { useTasks } from '@/hooks/useTasks';
+import { api } from '@/services/api';
+import type { Session } from '@/services/types';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -14,6 +17,22 @@ export function Dashboard() {
   const [selectedMenu, setSelectedMenu] = useState<MenuKey>('dashboard');
   const [showNewTask, setShowNewTask] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [sessions, setSessions] = useState<Record<string, Session>>({});
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  useTasks();
+
+  useEffect(() => {
+    if (selectedMenu === 'sessions') {
+      setSessionsLoading(true);
+      api.getSessions()
+        .then((res) => {
+          setSessions(res.sessions);
+        })
+        .catch(console.error)
+        .finally(() => setSessionsLoading(false));
+    }
+  }, [selectedMenu]);
 
   const menuItems = [
     {
@@ -37,8 +56,44 @@ export function Dashboard() {
     switch (selectedMenu) {
       case 'sessions':
         return (
-          <Card title="Sessions">
-            <Text type="secondary">Manage your OpenCode sessions here</Text>
+          <Card title="Sessions" loading={sessionsLoading}>
+            {Object.keys(sessions).length === 0 && !sessionsLoading ? (
+              <Text type="secondary">No sessions found</Text>
+            ) : (
+              <Table
+                dataSource={Object.entries(sessions).map(([key, session]) => ({
+                  key,
+                  filename: key,
+                  sessionId: session.session_id,
+                  createdAt: session.created_at,
+                  lastUsed: session.last_used,
+                }))}
+                columns={[
+                  {
+                    title: 'Excel File',
+                    dataIndex: 'filename',
+                    key: 'filename',
+                  },
+                  {
+                    title: 'Session ID',
+                    dataIndex: 'sessionId',
+                    key: 'sessionId',
+                    render: (text) => <Tag>{text}</Tag>,
+                  },
+                  {
+                    title: 'Created At',
+                    dataIndex: 'createdAt',
+                    key: 'createdAt',
+                  },
+                  {
+                    title: 'Last Used',
+                    dataIndex: 'lastUsed',
+                    key: 'lastUsed',
+                  },
+                ]}
+                pagination={false}
+              />
+            )}
           </Card>
         );
       case 'testcases':
