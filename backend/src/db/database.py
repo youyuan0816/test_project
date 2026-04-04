@@ -19,7 +19,7 @@ from config import TASK_DB_PATH
 TASK_COLUMNS = [
     "id", "name", "task_type", "url", "description",
     "status", "phase", "session_id", "result_file", "result_message",
-    "created_at", "completed_at"
+    "created_at", "completed_at", "deleted_at"
 ]
 
 # Singleton instance
@@ -56,17 +56,19 @@ class TaskDB:
                     result_file TEXT,
                     result_message TEXT,
                     created_at TEXT NOT NULL,
-                    completed_at TEXT
+                    completed_at TEXT,
+                    deleted_at TEXT
                 )
             """)
             conn.commit()
         self._migrate_phase()
+        self._migrate_deleted_at()
         self._cleanup_old_tasks()
 
     def _cleanup_old_tasks(self):
         cutoff = (datetime.now() - timedelta(days=TASK_RETENTION_DAYS)).isoformat()
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("DELETE FROM tasks WHERE created_at < ?", (cutoff,))
+            conn.execute("DELETE FROM tasks WHERE created_at < ? AND deleted_at IS NULL", (cutoff,))
             conn.commit()
 
     def _migrate_phase(self):
@@ -78,11 +80,53 @@ class TaskDB:
                 conn.execute("ALTER TABLE tasks ADD COLUMN phase TEXT NOT NULL DEFAULT 'excel_generation'")
                 conn.commit()
 
+    def _migrate_deleted_at(self):
+        """Add deleted_at column if it doesn't exist (for existing databases)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("PRAGMA table_info(tasks)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "deleted_at" not in columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN deleted_at TEXT")
+                conn.commit()
+
     def update_task_phase(self, task_id: str, phase: str):
         """Update the phase of a task."""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("UPDATE tasks SET phase = ? WHERE id = ?", (phase, task_id))
             conn.commit()
+
+    def soft_delete_task(self, task_id: str) -> bool:
+        """Soft delete a task by setting deleted_at timestamp.
+        Returns True if deleted, False if task not found.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("SELECT id, status FROM tasks WHERE id = ? AND deleted_at IS NULL", (task_id,))
+            row = cursor.fetchone()
+            if not row:
+                return False
+            now = datetime.now().isoformat()
+            conn.execute("UPDATE tasks SET deleted_at = ? WHERE id = ?", (now, task_id))
+            conn.commit()
+            return True
+
+    def restore_task(self, task_id: str) -> bool:
+        """Restore a soft-deleted task by clearing deleted_at.
+        Returns True if restored, False if task not found.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("SELECT id FROM tasks WHERE id = ? AND deleted_at IS NOT NULL", (task_id,))
+            if not cursor.fetchone():
+                return False
+            conn.execute("UPDATE tasks SET deleted_at = NULL WHERE id = ?", (task_id,))
+            conn.commit()
+            return True
+
+    def get_deleted_tasks(self) -> List[dict]:
+        """Get all soft-deleted tasks (for recycle bin)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("SELECT * FROM tasks WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC")
+            rows = cursor.fetchall()
+        return [self._row_to_dict(row) for row in rows]
 
     def _row_to_dict(self, row):
         """Convert a row to a dict using column names."""
@@ -113,7 +157,7 @@ class TaskDB:
 
     def list_tasks(self) -> List[dict]:
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute("SELECT * FROM tasks ORDER BY created_at DESC")
+            cursor = conn.execute("SELECT * FROM tasks WHERE deleted_at IS NULL ORDER BY created_at DESC")
             rows = cursor.fetchall()
 
         return [self._row_to_dict(row) for row in rows]
