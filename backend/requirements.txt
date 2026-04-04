@@ -1,0 +1,7 @@
+playwright
+pytest
+pytest-playwright
+requests
+openpyxl
+fastapi
+uvicorn

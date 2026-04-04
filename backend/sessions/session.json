@@ -1,0 +1,12 @@
+{
+  "test.xlsx": {
+    "session_id": "ses_2a72408b5ffeIi6HraaiucV4zB",
+    "created_at": "2026-04-04T22:19:42.002595",
+    "last_used": "2026-04-04T22:19:42.002595"
+  },
+  "test_cases/verify_test.xlsx": {
+    "session_id": "excel_verify_test",
+    "created_at": "2026-04-04T17:34:46.388358",
+    "last_used": "2026-04-04T17:34:46.388358"
+  }
+}
