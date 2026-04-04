@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { Table, Tag, Button, Space } from 'antd';
+import { Table, Tag, Button, Space, Upload, message } from 'antd';
+import { api } from '@/services/api';
 import type { ColumnsType } from 'antd/es/table';
 
 interface TaskData {
@@ -15,10 +17,44 @@ interface TaskData {
 
 export function TaskList() {
   const { tasks, removeTask } = useTaskStore();
+  const [uploadingTasks, setUploadingTasks] = useState<Set<string>>(new Set());
+  const [generatingTasks, setGeneratingTasks] = useState<Set<string>>(new Set());
 
   const handleDownload = (task: TaskData) => {
     if (task.result_file) {
       window.open(`/api/download/${task.id}`, '_blank');
+    }
+  };
+
+  const handleUpload = async (task: TaskData, file: File) => {
+    setUploadingTasks(prev => new Set(prev).add(task.id));
+    try {
+      await api.uploadExcel(task.id, file);
+      message.success('File uploaded, generating code...');
+    } catch (error) {
+      message.error('Upload failed: ' + (error as Error).message);
+    } finally {
+      setUploadingTasks(prev => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+    }
+  };
+
+  const handleGenerate = async (task: TaskData) => {
+    setGeneratingTasks(prev => new Set(prev).add(task.id));
+    try {
+      await api.continueSession({ excel_file: task.result_file! });
+      message.success('Generating code...');
+    } catch (error) {
+      message.error('Generate failed: ' + (error as Error).message);
+    } finally {
+      setGeneratingTasks(prev => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
     }
   };
 
@@ -62,6 +98,31 @@ export function TaskList() {
       key: 'action',
       render: (_: unknown, record: TaskData) => (
         <Space>
+          {record.status === 'completed' && record.result_file && (
+            <>
+              <Upload
+                accept=".xlsx"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  handleUpload(record, file);
+                  return false;
+                }}
+                disabled={uploadingTasks.has(record.id)}
+              >
+                <Button size="small" loading={uploadingTasks.has(record.id)}>
+                  Upload Excel
+                </Button>
+              </Upload>
+              <Button
+                size="small"
+                onClick={() => handleGenerate(record)}
+                disabled={!record.result_file}
+                loading={generatingTasks.has(record.id)}
+              >
+                Generate Code
+              </Button>
+            </>
+          )}
           {record.status === 'completed' && record.result_file && (
             <Button
               size="small"
