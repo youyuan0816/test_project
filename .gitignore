@@ -36,3 +36,10 @@ htmlcov/
 # Temporary
 *.tmp
 *.bak
+
+# Docs (local only)
+docs/
+
+# Claude agents (local only)
+.claude/
+.agents/
