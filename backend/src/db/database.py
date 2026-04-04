@@ -177,11 +177,11 @@ class TaskDB:
 
         with sqlite3.connect(self.db_path) as conn:
             if session_id is not None:
-                conn.execute("UPDATE tasks SET session_id = ? WHERE id = ?", (session_id, task_id))
+                conn.execute("UPDATE tasks SET session_id = ? WHERE id = ? AND deleted_at IS NULL", (session_id, task_id))
             if result_file is not None:
-                conn.execute("UPDATE tasks SET result_file = ? WHERE id = ?", (result_file, task_id))
+                conn.execute("UPDATE tasks SET result_file = ? WHERE id = ? AND deleted_at IS NULL", (result_file, task_id))
             if result_message is not None:
-                conn.execute("UPDATE tasks SET result_message = ? WHERE id = ?", (result_message, task_id))
+                conn.execute("UPDATE tasks SET result_message = ? WHERE id = ? AND deleted_at IS NULL", (result_message, task_id))
 
             conn.execute(
                 "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ? AND deleted_at IS NULL",
