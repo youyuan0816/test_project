@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { GenerateRequest, ContinueRequest, GenerateResponse, SessionsResponse } from './types';
+import type { GenerateRequest, ContinueRequest, GenerateResponse, SessionsResponse, Task, TasksResponse } from './types';
 
 const API_BASE = '/api';
 
@@ -21,6 +21,16 @@ export const api = {
 
   health: async (): Promise<{ status: string }> => {
     const response = await axios.get(`${API_BASE}/health`);
+    return response.data;
+  },
+
+  getTasks: async (): Promise<TasksResponse> => {
+    const response = await axios.get(`${API_BASE}/tasks`);
+    return response.data;
+  },
+
+  getTask: async (id: string): Promise<Task> => {
+    const response = await axios.get(`${API_BASE}/tasks/${id}`);
     return response.data;
   },
 };
