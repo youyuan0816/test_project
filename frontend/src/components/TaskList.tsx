@@ -159,7 +159,7 @@ export function TaskList() {
           }}
           trigger={['click']}
         >
-          <Button size="small">
+          <Button type="text" size="small">
             操作
           </Button>
         </Dropdown>
