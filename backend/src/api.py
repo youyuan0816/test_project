@@ -11,7 +11,7 @@ from pydantic import BaseModel
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from generator import generate_excel, continue_session, list_sessions
-from db import TaskDB, PHASE_EXCEL, PHASE_CODE
+from db import TaskDB
 
 # Project root directory (parent of src/)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -100,7 +100,7 @@ def generate_excel_api(req: GenerateRequest):
         url=req.url,
         description=req.description,
     )
-    task_db.update_task_phase(task_id, PHASE_EXCEL)
+    task_db.update_task_phase(task_id, TaskDB.PHASE_EXCEL)
 
     # Start background worker
     thread = threading.Thread(
@@ -200,7 +200,7 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...)):
 
     # Start background worker to generate test code using SAME task_id
     task_db.update_task_status(task_id, "running")
-    task_db.update_task_phase(task_id, PHASE_CODE)
+    task_db.update_task_phase(task_id, TaskDB.PHASE_CODE)
 
     # Use relative path from PROJECT_ROOT for continue_session
     excel_relative = os.path.relpath(base_dir, PROJECT_ROOT)
