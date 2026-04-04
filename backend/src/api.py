@@ -81,7 +81,7 @@ def run_generate_excel(task_id: str, url: str, filepath: str, description: str, 
             continue_excel=continue_excel
         )
         status = "completed" if result["status"] in ("success", "warning") else "failed"
-        task_db.update_task_status(task_id, status, result_message=result["message"])
+        task_db.update_task_status(task_id, status, result_file=filepath, result_message=result["message"])
     except Exception as e:
         task_db.update_task_status(task_id, "failed", result_message=str(e))
 
@@ -118,7 +118,8 @@ def run_continue_session(task_id: str, excel_file: str):
         task_db.update_task_status(task_id, "running")
         result = continue_session(excel_file)
         status = "completed" if result["status"] in ("success", "warning") else "failed"
-        task_db.update_task_status(task_id, status, result_message=result["message"])
+        # For continue_session, result_file is the excel file that was processed
+        task_db.update_task_status(task_id, status, result_file=excel_file, result_message=result["message"])
     except Exception as e:
         task_db.update_task_status(task_id, "failed", result_message=str(e))
 
