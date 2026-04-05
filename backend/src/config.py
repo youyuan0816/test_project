@@ -6,6 +6,7 @@ PROJECT_ROOT = BASE_DIR.parent
 
 TASK_DB_PATH = PROJECT_ROOT / "tasks.db"
 SESSIONS_DIR = PROJECT_ROOT / "sessions"
+RESULTS_DIR = PROJECT_ROOT / "results"
 SESSIONS_FILE = SESSIONS_DIR / "session.json"
 OPENCODE_CMD = "P:\\nodejs\\opencode.cmd"
 API_HOST = "0.0.0.0"
