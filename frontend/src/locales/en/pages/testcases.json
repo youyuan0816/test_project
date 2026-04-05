@@ -1,0 +1,49 @@
+{
+  "card": {
+    "testCases": "Test Cases"
+  },
+  "testcase": {
+    "title": "Test Cases",
+    "name": "Task Name",
+    "excel": "Excel File",
+    "testCode": "Test Code",
+    "createdAt": "Created At",
+    "downloadExcel": "Download Excel",
+    "downloadCode": "Download Code",
+    "empty": "No test cases yet",
+    "runTest": "Run Test",
+    "details": "Details",
+    "viewReport": "View Report"
+  },
+  "testExecution": {
+    "title": "Test Execution",
+    "running": "Running...",
+    "passed": "Passed",
+    "failed": "Failed",
+    "duration": "Duration",
+    "completed": "Completed",
+    "error": "Error",
+    "viewingHistory": "View History",
+    "log": "Log",
+    "report": "Report",
+    "chart": "Chart",
+    "viewError": "View Error"
+  },
+  "visualReport": {
+    "loading": "Loading...",
+    "noData": "No report data",
+    "testCase": "Test Case",
+    "status": "Status",
+    "duration": "Duration",
+    "error": "Error",
+    "viewError": "View Error",
+    "summary": "Summary",
+    "statistics": "Statistics",
+    "total": "Total",
+    "passed": "Passed",
+    "failed": "Failed",
+    "skipped": "Skipped",
+    "cases": "Cases",
+    "failures": "Failures"
+  }
+}

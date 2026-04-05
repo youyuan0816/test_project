@@ -26,7 +26,7 @@ interface OutputLine {
 }
 
 export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete, historyMode = false, initialContent = '', reportUrl }: TestExecutionModalProps) {
-  const { t } = useTranslation();
+  const { t: tPage } = useTranslation('pages');
   const [outputs, setOutputs] = useState<OutputLine[]>([]);
   const [status, setStatus] = useState<'running' | 'completed' | 'error'>('running');
   const [summary, setSummary] = useState<{ passed: number; failed: number; duration: string } | null>(null);
@@ -93,11 +93,11 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   const getStatusTag = () => {
     switch (status) {
       case 'running':
-        return <Tag color="processing">{t('testExecution.running')}</Tag>;
+        return <Tag color="processing">{tPage('testcases.testExecution.running')}</Tag>;
       case 'completed':
-        return <Tag color="success">{t('testExecution.completed')}</Tag>;
+        return <Tag color="success">{tPage('testcases.testExecution.completed')}</Tag>;
       case 'error':
-        return <Tag color="error">{t('testExecution.error')}</Tag>;
+        return <Tag color="error">{tPage('testcases.testExecution.error')}</Tag>;
     }
   };
 
@@ -105,7 +105,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
     <Modal
       title={
         <Space>
-          <span>{t('testExecution.title')}</span>
+          <span>{tPage('testcases.testExecution.title')}</span>
           <Tag>{taskName}</Tag>
           {getStatusTag()}
         </Space>
@@ -134,7 +134,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
         items={[
           {
             key: 'log',
-            label: t('testExecution.log'),
+            label: tPage('testcases.testExecution.log'),
             children: (
               <>
                 <pre
@@ -166,9 +166,9 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
                 {summary && (
                   <div style={{ marginTop: 16 }}>
                     <Space>
-                      <Tag color="green">{t('testExecution.passed')}: {summary.passed}</Tag>
-                      {summary.failed > 0 && <Tag color="red">{t('testExecution.failed')}: {summary.failed}</Tag>}
-                      <Text type="secondary">{t('testExecution.duration')}: {summary.duration}</Text>
+                      <Tag color="green">{tPage('testcases.testExecution.passed')}: {summary.passed}</Tag>
+                      {summary.failed > 0 && <Tag color="red">{tPage('testcases.testExecution.failed')}: {summary.failed}</Tag>}
+                      <Text type="secondary">{tPage('testcases.testExecution.duration')}: {summary.duration}</Text>
                     </Space>
                   </div>
                 )}
@@ -177,7 +177,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
           },
           {
             key: 'report',
-            label: t('testExecution.report'),
+            label: tPage('testcases.testExecution.report'),
             children: (
               <iframe
                 src={reportUrl}
@@ -188,7 +188,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
           },
           {
             key: 'chart',
-            label: t('testExecution.chart'),
+            label: tPage('testcases.testExecution.chart'),
             children: (
               <VisualReport taskId={taskId} />
             ),

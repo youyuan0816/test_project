@@ -8,7 +8,8 @@ import type { TestCase } from '@/services/types';
 import { TestExecutionModal } from './TestExecutionModal';
 
 export function TestCases() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('global');
+  const { t: tPage } = useTranslation('pages');
   const [testcases, setTestcases] = useState<TestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [executionModal, setExecutionModal] = useState<{
@@ -48,14 +49,14 @@ export function TestCases() {
       items.push({
         key: 'run',
         icon: <PlayCircleOutlined />,
-        label: t('testcase.runTest'),
+        label: tPage('testcases.testcase.runTest'),
         disabled: runningTasks.has(record.task_id),
         onClick: () => handleRunTest(record),
       });
       items.push({
         key: 'details',
         icon: <EyeOutlined />,
-        label: t('testcase.details'),
+        label: tPage('testcases.testcase.details'),
         onClick: async () => {
           try {
             const result = await api.getTestResult(record.task_id);
@@ -75,7 +76,7 @@ export function TestCases() {
       items.push({
         key: 'download',
         icon: <DownloadOutlined />,
-        label: t('testcase.downloadCode'),
+        label: tPage('testcases.testcase.downloadCode'),
         onClick: () => api.downloadTestCode(record.task_id),
       });
     }
@@ -84,24 +85,24 @@ export function TestCases() {
 
   const columns = [
     {
-      title: t('testcase.name'),
+      title: tPage('testcases.testcase.name'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: t('testcase.excel'),
+      title: tPage('testcases.testcase.excel'),
       dataIndex: 'excel_file',
       key: 'excel_file',
       render: (file: string) => file ? <Tag color="blue">{file}</Tag> : '-',
     },
     {
-      title: t('testcase.testCode'),
+      title: tPage('testcases.testcase.testCode'),
       dataIndex: 'test_code_dir',
       key: 'test_code_dir',
       render: (dir: string) => dir ? <Tag color="purple">{dir}</Tag> : '-',
     },
     {
-      title: t('testcase.createdAt'),
+      title: tPage('testcases.testcase.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => date ? new Date(date).toLocaleString() : '-',
@@ -130,7 +131,7 @@ export function TestCases() {
         rowKey="task_id"
         pagination={false}
         loading={loading}
-        locale={{ emptyText: t('testcase.empty') }}
+        locale={{ emptyText: tPage('testcases.testcase.empty') }}
       />
       <TestExecutionModal
         open={executionModal.open}

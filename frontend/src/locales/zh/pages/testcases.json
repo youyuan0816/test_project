@@ -1,0 +1,49 @@
+{
+  "card": {
+    "testCases": "测试用例"
+  },
+  "testcase": {
+    "title": "测试用例",
+    "name": "任务名称",
+    "excel": "Excel 文件",
+    "testCode": "测试代码",
+    "createdAt": "创建时间",
+    "downloadExcel": "下载 Excel",
+    "downloadCode": "下载代码",
+    "empty": "暂无测试用例",
+    "runTest": "执行测试",
+    "details": "详情",
+    "viewReport": "查看报告"
+  },
+  "testExecution": {
+    "title": "测试执行",
+    "running": "执行中...",
+    "passed": "通过",
+    "failed": "失败",
+    "duration": "耗时",
+    "completed": "执行完成",
+    "error": "执行出错",
+    "viewingHistory": "查看历史记录",
+    "log": "日志",
+    "report": "报告",
+    "chart": "图表",
+    "viewError": "查看错误"
+  },
+  "visualReport": {
+    "loading": "加载中...",
+    "noData": "暂无报告数据",
+    "testCase": "测试用例",
+    "status": "状态",
+    "duration": "耗时",
+    "error": "错误",
+    "viewError": "查看错误",
+    "summary": "概览",
+    "statistics": "统计",
+    "total": "总数",
+    "passed": "通过",
+    "failed": "失败",
+    "skipped": "跳过",
+    "cases": "用例",
+    "failures": "失败用例"
+  }
+}

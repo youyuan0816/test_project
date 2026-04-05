@@ -12,7 +12,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import PROJECT_ROOT, OPENCODE_CMD
-from services.session import save_session_id, get_session_id, load_sessions
 
 
 def call_opencode(prompt: str, continue_session_id: Optional[str] = None) -> tuple:
@@ -99,7 +98,8 @@ def generate_excel(
     description: str,
     username: str = "",
     password: str = "",
-    continue_excel: Optional[str] = None
+    continue_excel: Optional[str] = None,
+    continue_session_id: Optional[str] = None,
 ) -> dict:
     """生成 Excel 测试用例（非交互式）
 
@@ -110,6 +110,7 @@ def generate_excel(
         username: 登录账号（可选）
         password: 登录密码（可选）
         continue_excel: 可选的 Excel 文件路径，用于继续之前的 session
+        continue_session_id: 可选的 session ID（由 API 层从 TaskDB 查询后传入）
 
     Returns:
         dict: {"status": "success"/"warning"/"error", "message": str, "output": str}
@@ -120,15 +121,6 @@ def generate_excel(
         return {"status": "error", "message": "保存路径不能为空", "output": ""}
     if not description:
         return {"status": "error", "message": "测试描述不能为空", "output": ""}
-
-    # 如果指定了 continue_excel，尝试获取对应的 session
-    continue_session_id = None
-    if continue_excel:
-        continue_session_id = get_session_id(continue_excel)
-        if continue_session_id:
-            print(f"[INFO] 继续之前的 session: {continue_session_id}")
-        else:
-            print(f"[INFO] 未找到 {continue_excel} 对应的 session，将创建新 session")
 
     login_info = f"登录账号：{username}，密码：{password}" if username else "无需登录"
 
@@ -161,10 +153,7 @@ Excel 格式要求：
 
     output, session_id = call_opencode(prompt, continue_session_id)
 
-    # 保存 session ID 映射
-    if session_id and filepath:
-        save_session_id(filepath, session_id)
-        print(f"[INFO] Session ID 已保存: {session_id}")
+    print(f"[INFO] Session ID from OpenCode: {session_id}")
 
     excel_path = os.path.join(PROJECT_ROOT, filepath)
 
@@ -176,20 +165,21 @@ Excel 格式要求：
                 actual_file_path = os.path.join(excel_path, f)
                 break
         else:
-            return {"status": "warning", "message": f"目录中未找到 Excel 文件: {filepath}", "output": output}
+            return {"status": "warning", "message": f"目录中未找到 Excel 文件: {filepath}", "output": output, "session_id": session_id}
 
     if os.path.exists(actual_file_path):
-        return {"status": "success", "message": f"Excel 已生成: {filepath}", "output": output, "actual_file": actual_file_path}
+        return {"status": "success", "message": f"Excel 已生成: {filepath}", "output": output, "actual_file": actual_file_path, "session_id": session_id}
     else:
         return {"status": "warning", "message": f"Excel 可能未生成，请检查: {filepath}", "output": output}
 
 
-def continue_session(excel_file: str, save_path: str = "") -> dict:
+def continue_session(excel_file: str, save_path: str = "", session_id: str = None) -> dict:
     """继续 session，读取 Excel 生成测试代码（非交互式）
 
     Args:
         excel_file: Excel 文件路径
         save_path: 保存路径（可选）
+        session_id: 可选的 session ID（由 API 层从 TaskDB 查询后传入）
 
     Returns:
         dict: {"status": "success"/"error", "message": str, "output": str}
@@ -210,13 +200,6 @@ def continue_session(excel_file: str, save_path: str = "") -> dict:
 
     if not os.path.exists(excel_path):
         return {"status": "error", "message": f"Excel 文件不存在: {excel_file}", "output": ""}
-
-    # 获取对应的 session ID
-    session_id = get_session_id(excel_file)
-    if session_id:
-        print(f"[INFO] 继续之前的 session: {session_id}")
-    else:
-        print(f"[INFO] 未找到 {excel_file} 对应的 session，将创建新 session")
 
     from openpyxl import load_workbook
     wb = load_workbook(excel_path)
@@ -286,10 +269,7 @@ def continue_session(excel_file: str, save_path: str = "") -> dict:
 
     output, new_session_id = call_opencode(prompt, session_id)
 
-    # 更新 session ID（如果生成了新的）
-    if new_session_id:
-        save_session_id(excel_file, new_session_id)
-        print(f"[INFO] Session ID 已更新: {new_session_id}")
+    print(f"[INFO] New session ID from OpenCode: {new_session_id}")
 
     test_code_dir = "tests/" + folder_name + "/test_" + file_name.replace(" ", "_") + ".py"
 
@@ -297,17 +277,10 @@ def continue_session(excel_file: str, save_path: str = "") -> dict:
         "status": "success",
         "message": "测试代码生成完成",
         "output": output,
-        "test_code_dir": test_code_dir
+        "test_code_dir": test_code_dir,
+        "session_id": new_session_id,
     }
 
-
-def list_sessions() -> dict:
-    """列出所有保存的 session"""
-    sessions = load_sessions()
-    return {
-        "status": "success",
-        "sessions": sessions
-    }
 
 
 # CLI 入口函数
@@ -318,7 +291,6 @@ def main():
     parser.add_argument('--generate', action='store_true', help='生成 Excel 测试用例')
     parser.add_argument('--continue', dest='continue_file', metavar='EXCEL_FILE',
                         help='继续 session，读取 Excel 生成测试代码')
-    parser.add_argument('--list-sessions', action='store_true', help='列出所有保存的 session')
     args = parser.parse_args()
 
     if args.generate:
@@ -334,11 +306,6 @@ def main():
     elif args.continue_file:
         result = continue_session(args.continue_file)
         print(result["message"])
-
-    elif args.list_sessions:
-        result = list_sessions()
-        for path, info in result["sessions"].items():
-            print(f"{path}: {info['session_id']}")
 
     else:
         parser.print_help()

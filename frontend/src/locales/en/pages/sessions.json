@@ -1,0 +1,12 @@
+{
+  "card": {
+    "sessions": "Sessions",
+    "noSessions": "No sessions found"
+  },
+  "session": {
+    "excelFile": "Excel File",
+    "sessionId": "Session ID",
+    "createdAt": "Created At",
+    "lastUsed": "Last Used"
+  }
+}

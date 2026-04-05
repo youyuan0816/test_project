@@ -1,0 +1,12 @@
+{
+  "card": {
+    "sessions": "会话",
+    "noSessions": "暂无会话"
+  },
+  "session": {
+    "excelFile": "Excel 文件",
+    "sessionId": "会话 ID",
+    "createdAt": "创建时间",
+    "lastUsed": "最后使用"
+  }
+}

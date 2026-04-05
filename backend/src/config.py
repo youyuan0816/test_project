@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
 
-TASK_DB_PATH = PROJECT_ROOT / "tasks.db"
+TASK_DB_PATH = PROJECT_ROOT / "data" / "tasks.db"
 SESSIONS_DIR = PROJECT_ROOT / "sessions"
 RESULTS_DIR = PROJECT_ROOT / "results"
 SESSIONS_FILE = SESSIONS_DIR / "session.json"

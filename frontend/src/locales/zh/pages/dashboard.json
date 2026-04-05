@@ -1,0 +1,9 @@
+{
+  "card": {
+    "newTask": "新建任务",
+    "continueSession": "继续会话",
+    "tasks": "任务",
+    "generateExcelDesc": "从网站生成 Excel 测试用例",
+    "uploadExcelDesc": "上传 Excel 继续生成测试代码"
+  }
+}

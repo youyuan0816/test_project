@@ -1,0 +1,58 @@
+{
+  "common": {
+    "action": "Action",
+    "close": "Close"
+  },
+  "header": {
+    "title": "UI Test Generator"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "sessions": "Sessions",
+    "testcases": "Test Cases"
+  },
+  "task": {
+    "name": "Name",
+    "url": "URL",
+    "description": "Description",
+    "status": "Status",
+    "createdAt": "Created",
+    "action": "Action"
+  },
+  "status": {
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "action": {
+    "download": "Download",
+    "upload": "Upload Excel",
+    "generate": "Generate Code",
+    "remove": "Remove"
+  },
+  "button": {
+    "newTask": "New Task",
+    "uploadExcel": "Upload Excel",
+    "close": "Close"
+  },
+  "form": {
+    "url": "URL",
+    "filepath": "Save Path",
+    "username": "Username",
+    "password": "Password",
+    "description": "Description"
+  },
+  "message": {
+    "uploadSuccess": "File uploaded, generating code...",
+    "uploadFailed": "Upload failed",
+    "generatingCode": "Generating code...",
+    "generateFailed": "Generate failed",
+    "taskCreated": "Task created successfully",
+    "noTasks": "No tasks yet. Create a new task to get started."
+  },
+  "phase": {
+    "excel_generation": "Generating Excel",
+    "code_generation": "Generating Code"
+  }
+}

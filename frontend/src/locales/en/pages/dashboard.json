@@ -1,0 +1,9 @@
+{
+  "card": {
+    "newTask": "New Task",
+    "continueSession": "Continue Session",
+    "tasks": "Tasks",
+    "generateExcelDesc": "Generate Excel test cases from a website",
+    "uploadExcelDesc": "Upload Excel to continue generating test code"
+  }
+}
