@@ -104,11 +104,17 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   return (
     <Modal
       title={
-        <Space>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>{t('testExecution.title')}</span>
           <Tag>{taskName}</Tag>
           {getStatusTag()}
-        </Space>
+          <Button
+            type="text"
+            icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
+            onClick={() => setFullScreen(!fullScreen)}
+            style={{ marginLeft: 8 }}
+          />
+        </div>
       }
       open={open}
       onCancel={onClose}
@@ -116,19 +122,9 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
       width={fullScreen ? '100%' : 900}
       style={fullScreen ? { top: 0, paddingBottom: 0 } : undefined}
       styles={{
-        body: fullScreen ? { height: 'calc(100vh - 110px)' } : {},
-        header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+        body: fullScreen ? { height: 'calc(100vh - 110px)' } : {}
       }}
       destroyOnClose
-      closeIcon={
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            type="text"
-            icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
-            onClick={() => setFullScreen(!fullScreen)}
-          />
-        </div>
-      }
     >
       <Tabs
         defaultActiveKey="log"
