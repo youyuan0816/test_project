@@ -21,11 +21,12 @@ export function TestCases() {
     taskName: ''
   });
   const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
-  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string }>({
+  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string; reportUrl?: string }>({
     open: false,
     taskId: '',
     taskName: '',
-    logContent: ''
+    logContent: '',
+    reportUrl: undefined
   });
 
   useEffect(() => {
@@ -62,7 +63,8 @@ export function TestCases() {
               open: true,
               taskId: record.task_id,
               taskName: record.name,
-              logContent: result.log_content
+              logContent: result.log_content,
+              reportUrl: result.report_url ? `/api/test-result/${record.task_id}/report` : undefined
             });
           } catch (error) {
             console.error('Failed to fetch test result:', error);
@@ -149,6 +151,7 @@ export function TestCases() {
         taskName={detailModal.taskName}
         historyMode={true}
         initialContent={detailModal.logContent || ''}
+        reportUrl={detailModal.reportUrl}
         onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '' })}
       />
     </>
