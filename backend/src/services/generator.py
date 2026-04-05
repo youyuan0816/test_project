@@ -164,8 +164,19 @@ Excel 格式要求：
         print(f"[INFO] Session ID 已保存: {session_id}")
 
     excel_path = os.path.join(PROJECT_ROOT, filepath)
-    if os.path.exists(excel_path):
-        return {"status": "success", "message": f"Excel 已生成: {filepath}", "output": output}
+
+    # Handle directory path - find .xlsx file inside
+    actual_file_path = excel_path
+    if os.path.isdir(excel_path):
+        for f in os.listdir(excel_path):
+            if f.endswith('.xlsx'):
+                actual_file_path = os.path.join(excel_path, f)
+                break
+        else:
+            return {"status": "warning", "message": f"目录中未找到 Excel 文件: {filepath}", "output": output}
+
+    if os.path.exists(actual_file_path):
+        return {"status": "success", "message": f"Excel 已生成: {filepath}", "output": output, "actual_file": actual_file_path}
     else:
         return {"status": "warning", "message": f"Excel 可能未生成，请检查: {filepath}", "output": output}
 
@@ -183,6 +194,16 @@ def continue_session(excel_file: str) -> dict:
         return {"status": "error", "message": "Excel 文件路径不能为空", "output": ""}
 
     excel_path = os.path.join(PROJECT_ROOT, excel_file)
+
+    # Handle directory path - find .xlsx file inside
+    if os.path.isdir(excel_path):
+        for f in os.listdir(excel_path):
+            if f.endswith('.xlsx'):
+                excel_path = os.path.join(excel_path, f)
+                break
+        else:
+            return {"status": "error", "message": f"目录中未找到 Excel 文件: {excel_file}", "output": ""}
+
     if not os.path.exists(excel_path):
         return {"status": "error", "message": f"Excel 文件不存在: {excel_file}", "output": ""}
 
@@ -242,7 +263,12 @@ def continue_session(excel_file: str) -> dict:
         save_session_id(excel_file, new_session_id)
         print(f"[INFO] Session ID 已更新: {new_session_id}")
 
-    return {"status": "success", "message": "测试代码生成完成", "output": output}
+    return {
+        "status": "success",
+        "message": "测试代码生成完成",
+        "output": output,
+        "test_code_dir": "tests/" + os.path.splitext(os.path.basename(excel_file))[0] + "/"
+    }
 
 
 def list_sessions() -> dict:

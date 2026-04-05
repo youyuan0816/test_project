@@ -112,8 +112,10 @@ def run_continue_session(task_id: str, excel_file: str):
         task_db.update_task_status(task_id, "running")
         result = continue_session(excel_file)
         status = "completed" if result["status"] in ("success", "warning") else "failed"
-        # For continue_session, result_file is the excel file that was processed
+        test_code_dir = result.get("test_code_dir")
         task_db.update_task_status(task_id, status, result_file=excel_file, result_message=result["message"])
+        if test_code_dir and status == "completed":
+            task_db.update_task_test_code(task_id, test_code_dir)
     except Exception as e:
         task_db.update_task_status(task_id, "failed", result_message=str(e))
 
