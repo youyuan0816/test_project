@@ -82,7 +82,8 @@
     "downloadCode": "Download Code",
     "empty": "No test cases yet",
     "runTest": "Run Test",
-    "details": "Details"
+    "details": "Details",
+    "viewReport": "View Report"
   },
   "testExecution": {
     "title": "Test Execution",

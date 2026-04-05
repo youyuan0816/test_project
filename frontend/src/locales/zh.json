@@ -82,7 +82,8 @@
     "downloadCode": "下载代码",
     "empty": "暂无测试用例",
     "runTest": "执行测试",
-    "details": "详情"
+    "details": "详情",
+    "viewReport": "查看报告"
   },
   "testExecution": {
     "title": "测试执行",

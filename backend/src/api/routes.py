@@ -565,6 +565,28 @@ def get_test_result(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     return {
         "status": "success",
         "log_content": log_content,
-        "log_file": log_file_rel
+        "log_file": log_file_rel,
+        "report_url": f"/test-result/{task_id}/report"
     }
+
+
+@app.get("/test-result/{task_id}/report")
+def get_test_report(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """返回 pytest-html 测试报告"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    test_code_file = task.get("test_code_file")
+    if not test_code_file:
+        raise HTTPException(status_code=404, detail="No test code for this task")
+
+    # Find report.html
+    test_code_dir = os.path.dirname(os.path.join(PROJECT_ROOT, test_code_file))
+    report_path = os.path.join(test_code_dir, "results", "report.html")
+
+    if not os.path.exists(report_path):
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    return FileResponse(report_path, media_type="text/html")
 

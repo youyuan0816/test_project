@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Tag, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { DownloadOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import { DownloadOutlined, PlayCircleOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { TestCase } from '@/services/types';
@@ -63,6 +63,14 @@ export function TestCases() {
             console.error('Failed to fetch test result:', error);
             setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: 'Failed to load log content' });
           }
+        },
+      });
+      items.push({
+        key: 'report',
+        icon: <FileTextOutlined />,
+        label: t('testcase.viewReport'),
+        onClick: () => {
+          window.open(`/api/test-result/${record.task_id}/report`, '_blank');
         },
       });
       items.push({
