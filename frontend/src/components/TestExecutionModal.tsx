@@ -104,12 +104,24 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   return (
     <Modal
       title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Space>
-            <span>{t('testExecution.title')}</span>
-            <Tag>{taskName}</Tag>
-            {getStatusTag()}
-          </Space>
+        <Space>
+          <span>{t('testExecution.title')}</span>
+          <Tag>{taskName}</Tag>
+          {getStatusTag()}
+        </Space>
+      }
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      width={fullScreen ? '100%' : 900}
+      style={fullScreen ? { top: 0, paddingBottom: 0 } : undefined}
+      styles={{
+        body: fullScreen ? { height: 'calc(100vh - 110px)' } : {},
+        header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+      }}
+      destroyOnClose
+      closeIcon={
+        <div style={{ display: 'flex', gap: 8 }}>
           <Button
             type="text"
             icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
@@ -117,14 +129,6 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
           />
         </div>
       }
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width={fullScreen ? '100%' : 900}
-      height={fullScreen ? '100%' : undefined}
-      style={fullScreen ? { top: 0, paddingBottom: 0 } : undefined}
-      styles={fullScreen ? { body: { height: 'calc(100vh - 110px)' } } : {}}
-      destroyOnClose
     >
       <Tabs
         defaultActiveKey="log"
