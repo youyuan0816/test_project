@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 import sys
@@ -423,20 +424,23 @@ def download_test_code(task_id: str, task_db: TaskDB = Depends(get_task_db_dep))
 
     full_path = os.path.join(PROJECT_ROOT, normalized)
 
-    if not os.path.exists(full_path) or not os.path.isdir(full_path):
-        raise HTTPException(status_code=404, detail="Directory not found")
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="File not found")
 
-    # Create zip from directory
     import zipfile
     import io
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(full_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, PROJECT_ROOT)
-                zipf.write(file_path, arcname)
+        if os.path.isdir(full_path):
+            for root, dirs, files in os.walk(full_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, PROJECT_ROOT)
+                    zipf.write(file_path, arcname)
+        else:
+            arcname = os.path.relpath(full_path, PROJECT_ROOT)
+            zipf.write(full_path, arcname)
 
     zip_buffer.seek(0)
 
@@ -445,5 +449,48 @@ def download_test_code(task_id: str, task_db: TaskDB = Depends(get_task_db_dep))
         media_type="application/zip",
         headers={
             "Content-Disposition": f"attachment; filename={os.path.basename(test_code_dir)}.zip"
+        }
+    )
+
+
+@app.get("/run-test/{task_id}")
+def run_test_api(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """Execute test code via pytest and stream output via SSE"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    test_code_file = task.get("test_code_file")
+    if not test_code_file:
+        raise HTTPException(status_code=400, detail="No test code for this task")
+
+    # Security check
+    normalized = os.path.normpath(test_code_file)
+    normalized_forward = normalized.replace('\\', '/')
+    if ".." in normalized_forward or not normalized_forward.startswith("tests/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    full_path = os.path.join(PROJECT_ROOT, normalized)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Test file not found")
+
+    def event_generator():
+        from services.executor import run_test
+
+        def on_output(stream_type, content):
+            event_data = json.dumps({"type": stream_type, "content": content})
+            yield f"data: {event_data}\n\n"
+
+        result = run_test(test_code_file, on_output)
+
+        # Send final result
+        yield f"data: {json.dumps({'type': 'result', **result})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
         }
     )
