@@ -5,3 +5,4 @@ requests
 openpyxl
 fastapi
 uvicorn
+allure-pytest
