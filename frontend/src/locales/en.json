@@ -81,7 +81,8 @@
     "downloadExcel": "Download Excel",
     "downloadCode": "Download Code",
     "empty": "No test cases yet",
-    "runTest": "Run Test"
+    "runTest": "Run Test",
+    "details": "Details"
   },
   "testExecution": {
     "title": "Test Execution",
@@ -90,6 +91,9 @@
     "failed": "Failed",
     "duration": "Duration",
     "completed": "Completed",
-    "error": "Error"
+    "error": "Error",
+    "viewingHistory": "View History",
+    "log": "Log",
+    "fullReport": "Full Report"
   }
 }
