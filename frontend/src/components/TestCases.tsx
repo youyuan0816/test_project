@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Tag, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { DownloadOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { TestCase } from '@/services/types';
@@ -11,10 +11,23 @@ export function TestCases() {
   const { t } = useTranslation();
   const [testcases, setTestcases] = useState<TestCase[]>([]);
   const [loading, setLoading] = useState(false);
-  const [executionModal, setExecutionModal] = useState<{ open: boolean; taskId: string; taskName: string }>({
+  const [executionModal, setExecutionModal] = useState<{
+    open: boolean;
+    taskId: string;
+    taskName: string;
+    allureReportUrl?: string;
+  }>({
     open: false,
     taskId: '',
-    taskName: ''
+    taskName: '',
+    allureReportUrl: undefined
+  });
+  const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
+  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string }>({
+    open: false,
+    taskId: '',
+    taskName: '',
+    logContent: ''
   });
 
   useEffect(() => {
@@ -25,6 +38,11 @@ export function TestCases() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleRunTest = (record: TestCase) => {
+    setRunningTasks(prev => new Set(prev).add(record.task_id));
+    setExecutionModal({ open: true, taskId: record.task_id, taskName: record.name, allureReportUrl: undefined });
+  };
+
   const getActionItems = (record: TestCase): MenuProps['items'] => {
     const items: MenuProps['items'] = [];
     if (record.test_code_dir) {
@@ -32,7 +50,22 @@ export function TestCases() {
         key: 'run',
         icon: <PlayCircleOutlined />,
         label: t('testcase.runTest'),
-        onClick: () => setExecutionModal({ open: true, taskId: record.task_id, taskName: record.name }),
+        disabled: runningTasks.has(record.task_id),
+        onClick: () => handleRunTest(record),
+      });
+      items.push({
+        key: 'details',
+        icon: <EyeOutlined />,
+        label: t('testcase.details'),
+        onClick: async () => {
+          try {
+            const result = await api.getTestResult(record.task_id);
+            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content });
+          } catch (error) {
+            console.error('Failed to fetch test result:', error);
+            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: 'Failed to load log content' });
+          }
+        },
       });
       items.push({
         key: 'download',
@@ -98,7 +131,26 @@ export function TestCases() {
         open={executionModal.open}
         taskId={executionModal.taskId}
         taskName={executionModal.taskName}
-        onClose={() => setExecutionModal({ open: false, taskId: '', taskName: '' })}
+        allureReportUrl={executionModal.allureReportUrl}
+        onClose={() => setExecutionModal({ open: false, taskId: '', taskName: '', allureReportUrl: undefined })}
+        onComplete={(taskId, allureReportUrl) => {
+          setRunningTasks(prev => {
+            const next = new Set(prev);
+            next.delete(taskId);
+            return next;
+          });
+          if (allureReportUrl) {
+            setExecutionModal(prev => ({ ...prev, allureReportUrl }));
+          }
+        }}
+      />
+      <TestExecutionModal
+        open={detailModal.open}
+        taskId={detailModal.taskId}
+        taskName={detailModal.taskName}
+        historyMode={true}
+        initialContent={detailModal.logContent || ''}
+        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '' })}
       />
     </>
   );

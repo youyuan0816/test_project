@@ -9,7 +9,7 @@ interface TestExecutionModalProps {
   taskId: string;
   taskName: string;
   onClose: () => void;
-  onComplete?: (taskId: string) => void;
+  onComplete?: (taskId: string, allureReportUrl?: string) => void;
   historyMode?: boolean;
   initialContent?: string;
   allureReportUrl?: string;
@@ -61,7 +61,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
         setOutputs(prev => [...prev, { type: 'result', content: '', ...data }]);
         eventSource.close();
         if (onComplete) {
-          onComplete(taskId);
+          onComplete(taskId, data.allure_report_url);
         }
       } else {
         setOutputs(prev => [...prev, { type: data.type, content: data.content }]);
