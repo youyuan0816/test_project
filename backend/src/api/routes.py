@@ -590,3 +590,83 @@ def get_test_report(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
 
     return FileResponse(report_path, media_type="text/html")
 
+
+@app.get("/test-result/{task_id}/report-data")
+def get_report_data(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """返回解析后的测试报告数据"""
+    import html
+    import json as json_lib
+
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    test_code_file = task.get("test_code_file")
+    if not test_code_file:
+        raise HTTPException(status_code=404, detail="No test code for this task")
+
+    # Find report.html
+    test_code_dir = os.path.dirname(os.path.join(PROJECT_ROOT, test_code_file))
+    report_path = os.path.join(test_code_dir, "results", "report.html")
+
+    if not os.path.exists(report_path):
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    # Parse JSON from report.html
+    try:
+        with open(report_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Find data-container div and extract JSON
+        import re
+        match = re.search(r'data-jsonblob="([^"]+)"', content)
+        if not match:
+            raise HTTPException(status_code=500, detail="Failed to find report data")
+
+        # Decode HTML entities
+        json_str = html.unescape(match.group(1))
+        data = json_lib.loads(json_str)
+
+        # Extract test results
+        tests = data.get("tests", {})
+        test_cases = []
+        passed = 0
+        failed = 0
+        skipped = 0
+
+        for test_name, test_list in tests.items():
+            if not test_list:
+                continue
+            test_info = test_list[0]
+            result = test_info.get("result", "").lower()
+            status = "passed" if result == "passed" else ("failed" if result == "failed" else "skipped")
+
+            if status == "passed":
+                passed += 1
+            elif status == "failed":
+                failed += 1
+            else:
+                skipped += 1
+
+            test_cases.append({
+                "name": test_name,
+                "status": status,
+                "duration": test_info.get("duration", "0s"),
+                "message": test_info.get("log") if status == "failed" else None
+            })
+
+        return {
+            "summary": {
+                "total": len(test_cases),
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped
+            },
+            "test_cases": test_cases
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse report: {str(e)}")
+
