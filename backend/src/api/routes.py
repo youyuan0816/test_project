@@ -105,13 +105,19 @@ def generate_excel_api(req: GenerateRequest, task_db: TaskDB = Depends(get_task_
     )
 
 
-def run_continue_session(task_id: str, excel_file: str):
+def run_continue_session(task_id: str, excel_file: str, save_path: str = ""):
     """Background worker for continue_session"""
     task_db = get_task_db()
     task_db.update_task_phase(task_id, PHASE_CODE)
     try:
         task_db.update_task_status(task_id, "running")
-        result = continue_session(excel_file)
+
+        # 获取 task.name（即 save_path）
+        if not save_path:
+            task = task_db.get_task(task_id)
+            save_path = task.get("name", "") if task else ""
+
+        result = continue_session(excel_file, save_path=save_path)
         status = "completed" if result["status"] in ("success", "warning") else "failed"
         test_code_dir = result.get("test_code_dir")
         task_db.update_task_status(task_id, status, result_file=excel_file, result_message=result["message"])
@@ -216,9 +222,14 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...), task_db: 
     # Use relative path from PROJECT_ROOT for continue_session
     excel_relative = os.path.relpath(base_dir, PROJECT_ROOT)
     excel_relative = excel_relative.replace(os.sep, '/')
+
+    # 获取 task.name（即 save_path）
+    task = task_db.get_task(task_id)
+    save_path = task.get("name", "") if task else ""
+
     thread = threading.Thread(
         target=run_continue_session,
-        args=(task_id, excel_relative)
+        args=(task_id, excel_relative, save_path)
     )
     thread.start()
 
@@ -475,16 +486,27 @@ def run_test_api(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
         raise HTTPException(status_code=404, detail="Test file not found")
 
     def event_generator():
+        import queue
+        import threading
         from services.executor import run_test
 
-        def on_output(stream_type, content):
-            event_data = json.dumps({"type": stream_type, "content": content})
-            yield f"data: {event_data}\n\n"
+        q: queue.Queue = queue.Queue()
 
-        result = run_test(test_code_file, on_output)
+        def on_output(stream_type: str, content: str):
+            q.put({"type": stream_type, "content": content})
 
-        # Send final result
-        yield f"data: {json.dumps({'type': 'result', **result})}\n\n"
+        def run_in_thread():
+            run_test(test_code_file, on_output)
+            q.put(None)  # Signal completion
+
+        thread = threading.Thread(target=run_in_thread)
+        thread.start()
+
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            yield f"data: {json.dumps(item)}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -494,3 +516,55 @@ def run_test_api(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
             "Connection": "keep-alive",
         }
     )
+
+
+@app.get("/test-result/{task_id}")
+def get_test_result(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取测试结果日志内容"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    test_code_file = task.get("test_code_file")
+    if not test_code_file:
+        raise HTTPException(status_code=404, detail="No test code for this task")
+
+    # Security check
+    normalized = os.path.normpath(test_code_file)
+    normalized_forward = normalized.replace('\\', '/')
+    if ".." in normalized_forward or not normalized_forward.startswith("tests/"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    # Find the most recent log file in tests/{save_path}/results/
+    test_code_dir = os.path.dirname(os.path.join(PROJECT_ROOT, normalized))
+    results_dir = os.path.join(test_code_dir, "results")
+
+    if not os.path.exists(results_dir):
+        raise HTTPException(status_code=404, detail="No results directory found")
+
+    # Find most recent .log file
+    log_files = [f for f in os.listdir(results_dir) if f.endswith('.log')]
+    if not log_files:
+        raise HTTPException(status_code=404, detail="No log file found")
+
+    latest_log = max(log_files, key=lambda f: os.path.getmtime(os.path.join(results_dir, f)))
+    log_path = os.path.join(results_dir, latest_log)
+
+    # Build relative log_file path from test_code_file
+    test_dir = '/'.join(test_code_file.split('/')[:-1])  # e.g., "tests/google" from "tests/google/home_test.py"
+    log_file_rel = f"{test_dir}/results/{latest_log}"
+
+    # Read log content with size limit (1MB)
+    MAX_LOG_SIZE = 1024 * 1024  # 1MB
+    try:
+        with open(log_path, 'r', encoding='utf-8') as f:
+            log_content = f.read(MAX_LOG_SIZE)
+    except (FileNotFoundError, IOError, UnicodeDecodeError) as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read log file: {str(e)}")
+
+    return {
+        "status": "success",
+        "log_content": log_content,
+        "log_file": log_file_rel,
+        "allure_report_url": f"/test-result/{task_id}/report"
+    }
