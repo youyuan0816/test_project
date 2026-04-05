@@ -104,7 +104,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   return (
     <Modal
       title={
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <Space>
             <span>{t('testExecution.title')}</span>
             <Tag>{taskName}</Tag>
@@ -115,7 +115,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
             icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
             onClick={() => setFullScreen(!fullScreen)}
           />
-        </Space>
+        </div>
       }
       open={open}
       onCancel={onClose}
