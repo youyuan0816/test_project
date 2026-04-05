@@ -415,8 +415,10 @@ def download_test_code(task_id: str, task_db: TaskDB = Depends(get_task_db_dep))
         raise HTTPException(status_code=404, detail="No test code for this task")
 
     # Security check: ensure path is within tests/ directory
-    normalized = os.path.normpath(test_code_dir.replace('/', os.sep))
-    if ".." in normalized or not normalized.startswith("tests"):
+    normalized = os.path.normpath(test_code_dir)
+    # Convert to forward slashes for cross-platform comparison
+    normalized_forward = normalized.replace('\\', '/')
+    if ".." in normalized_forward or not normalized_forward.startswith("tests/"):
         raise HTTPException(status_code=400, detail="Invalid path")
 
     full_path = os.path.join(PROJECT_ROOT, normalized)
