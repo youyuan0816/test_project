@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Modal, Typography, Tag, Space, Tabs, Button } from 'antd';
 import { ExpandOutlined, CompressOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { VisualReport } from './VisualReport';
 
 const { Text } = Typography;
 
@@ -178,11 +179,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
             key: 'report',
             label: t('testExecution.report'),
             children: (
-              <iframe
-                src={reportUrl}
-                style={{ width: '100%', height: fullScreen ? 'calc(100vh - 200px)' : '500px', border: 'none' }}
-                title="Test Report"
-              />
+              <VisualReport taskId={taskId} />
             ),
           }] : []),
         ]}
