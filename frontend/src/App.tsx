@@ -1,9 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
 
 function AppRoutes() {
-  const location = useLocation();
-
   return (
     <Routes>
       <Route path="/" element={<Dashboard key="dashboard" />} />
