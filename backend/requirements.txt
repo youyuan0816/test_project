@@ -1,6 +1,7 @@
 playwright
 pytest
 pytest-playwright
+pytest-html
 requests
 openpyxl
 fastapi

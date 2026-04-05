@@ -31,7 +31,9 @@ def run_test(
 
     cmd = [
         sys.executable, "-u", "-m", "pytest",
-        test_code_path, "-v", "--tb=short"
+        test_code_path, "-v", "--tb=short",
+        "--html", str(results_dir / "report.html"),
+        "--self-contained-html"
     ]
 
     start_time = time.time()
