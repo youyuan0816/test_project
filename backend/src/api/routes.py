@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 # Ensure src directory is in Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -32,9 +31,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Mount tests/ directory as static files for Allure report
-app.mount("/tests", StaticFiles(directory=str(PROJECT_ROOT / "tests")), name="tests")
 
 
 class DeletedTasksListResponse(BaseModel):
@@ -569,31 +565,6 @@ def get_test_result(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
     return {
         "status": "success",
         "log_content": log_content,
-        "log_file": log_file_rel,
-        "allure_report_url": f"/test-result/{task_id}/report"
+        "log_file": log_file_rel
     }
 
-
-@app.get("/test-result/{task_id}/report")
-def get_allure_report(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
-    """返回 Allure 报告的 HTML 页面"""
-    task = task_db.get_task(task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    test_code_file = task.get("test_code_file")
-    if not test_code_file:
-        raise HTTPException(status_code=404, detail="No test code for this task")
-
-    # Find allure-report directory
-    test_code_dir = os.path.dirname(os.path.join(PROJECT_ROOT, test_code_file))
-    allure_report_dir = os.path.join(test_code_dir, "allure-report")
-
-    if not os.path.exists(allure_report_dir):
-        raise HTTPException(status_code=404, detail="Allure report not found")
-
-    index_path = os.path.join(allure_report_dir, "index.html")
-    if not os.path.exists(index_path):
-        raise HTTPException(status_code=404, detail="Report index.html not found")
-
-    return FileResponse(index_path, media_type="text/html")

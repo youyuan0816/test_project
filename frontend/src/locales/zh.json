@@ -92,8 +92,6 @@
     "duration": "耗时",
     "completed": "执行完成",
     "error": "执行出错",
-    "viewingHistory": "查看历史记录",
-    "log": "日志",
-    "fullReport": "完整报告"
+    "viewingHistory": "查看历史记录"
   }
 }

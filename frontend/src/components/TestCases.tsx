@@ -15,20 +15,17 @@ export function TestCases() {
     open: boolean;
     taskId: string;
     taskName: string;
-    allureReportUrl?: string;
   }>({
     open: false,
     taskId: '',
-    taskName: '',
-    allureReportUrl: undefined
+    taskName: ''
   });
   const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
-  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string; allureReportUrl?: string }>({
+  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string }>({
     open: false,
     taskId: '',
     taskName: '',
-    logContent: '',
-    allureReportUrl: undefined
+    logContent: ''
   });
 
   useEffect(() => {
@@ -41,7 +38,7 @@ export function TestCases() {
 
   const handleRunTest = (record: TestCase) => {
     setRunningTasks(prev => new Set(prev).add(record.task_id));
-    setExecutionModal({ open: true, taskId: record.task_id, taskName: record.name, allureReportUrl: undefined });
+    setExecutionModal({ open: true, taskId: record.task_id, taskName: record.name });
   };
 
   const getActionItems = (record: TestCase): MenuProps['items'] => {
@@ -61,7 +58,7 @@ export function TestCases() {
         onClick: async () => {
           try {
             const result = await api.getTestResult(record.task_id);
-            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content, allureReportUrl: result.allure_report_url });
+            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content });
           } catch (error) {
             console.error('Failed to fetch test result:', error);
             setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: 'Failed to load log content' });
@@ -132,17 +129,13 @@ export function TestCases() {
         open={executionModal.open}
         taskId={executionModal.taskId}
         taskName={executionModal.taskName}
-        allureReportUrl={executionModal.allureReportUrl}
-        onClose={() => setExecutionModal({ open: false, taskId: '', taskName: '', allureReportUrl: undefined })}
-        onComplete={(taskId, allureReportUrl) => {
+        onClose={() => setExecutionModal({ open: false, taskId: '', taskName: '' })}
+        onComplete={(taskId) => {
           setRunningTasks(prev => {
             const next = new Set(prev);
             next.delete(taskId);
             return next;
           });
-          if (allureReportUrl) {
-            setExecutionModal(prev => ({ ...prev, allureReportUrl }));
-          }
         }}
       />
       <TestExecutionModal
@@ -151,8 +144,7 @@ export function TestCases() {
         taskName={detailModal.taskName}
         historyMode={true}
         initialContent={detailModal.logContent || ''}
-        allureReportUrl={detailModal.allureReportUrl}
-        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '', allureReportUrl: undefined })}
+        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '' })}
       />
     </>
   );

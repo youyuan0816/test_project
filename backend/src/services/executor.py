@@ -31,8 +31,7 @@ def run_test(
 
     cmd = [
         sys.executable, "-u", "-m", "pytest",
-        test_code_path, "-v", "--tb=short",
-        "--alluredir", str(results_dir / "allure-results")
+        test_code_path, "-v", "--tb=short"
     ]
 
     start_time = time.time()
@@ -67,21 +66,6 @@ def run_test(
                     break
 
             process.wait()
-
-        # Generate Allure report
-        allure_results_dir = results_dir / "allure-results"
-        allure_report_dir = results_dir / "allure-report"
-
-        if allure_results_dir.exists():
-            try:
-                subprocess.run(
-                    ["allure", "generate", str(allure_results_dir), "-o", str(allure_report_dir)],
-                    capture_output=True,
-                    timeout=60
-                )
-                print(f"[INFO] Allure report generated: {allure_report_dir}")
-            except Exception as e:
-                print(f"[WARN] Failed to generate Allure report: {e}")
 
         duration = f"{time.time() - start_time:.1f}s"
 

@@ -92,8 +92,6 @@
     "duration": "Duration",
     "completed": "Completed",
     "error": "Error",
-    "viewingHistory": "View History",
-    "log": "Log",
-    "fullReport": "Full Report"
+    "viewingHistory": "View History"
   }
 }
