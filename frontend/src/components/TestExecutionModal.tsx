@@ -111,7 +111,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
         </Space>
       }
       closeIcon={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <Button
             type="text"
             icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
