@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Tag, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { DownloadOutlined, PlayCircleOutlined, EyeOutlined, FileTextOutlined } from '@ant-design/icons';
+import { DownloadOutlined, PlayCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { TestCase } from '@/services/types';
@@ -21,11 +21,12 @@ export function TestCases() {
     taskName: ''
   });
   const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
-  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string }>({
+  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string; reportUrl?: string }>({
     open: false,
     taskId: '',
     taskName: '',
-    logContent: ''
+    logContent: '',
+    reportUrl: undefined
   });
 
   useEffect(() => {
@@ -58,19 +59,17 @@ export function TestCases() {
         onClick: async () => {
           try {
             const result = await api.getTestResult(record.task_id);
-            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content });
+            setDetailModal({
+              open: true,
+              taskId: record.task_id,
+              taskName: record.name,
+              logContent: result.log_content,
+              reportUrl: result.report_url ? `/api/test-result/${record.task_id}/report` : undefined
+            });
           } catch (error) {
             console.error('Failed to fetch test result:', error);
             setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: 'Failed to load log content' });
           }
-        },
-      });
-      items.push({
-        key: 'report',
-        icon: <FileTextOutlined />,
-        label: t('testcase.viewReport'),
-        onClick: () => {
-          window.open(`/api/test-result/${record.task_id}/report`, '_blank');
         },
       });
       items.push({
@@ -152,7 +151,8 @@ export function TestCases() {
         taskName={detailModal.taskName}
         historyMode={true}
         initialContent={detailModal.logContent || ''}
-        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '' })}
+        reportUrl={detailModal.reportUrl}
+        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '', reportUrl: undefined })}
       />
     </>
   );

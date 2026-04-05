@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Typography, Tag, Space } from 'antd';
+import { Modal, Typography, Tag, Space, Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
@@ -12,6 +12,7 @@ interface TestExecutionModalProps {
   onComplete?: (taskId: string) => void;
   historyMode?: boolean;
   initialContent?: string;
+  reportUrl?: string;
 }
 
 interface OutputLine {
@@ -22,7 +23,7 @@ interface OutputLine {
   duration?: string;
 }
 
-export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete, historyMode = false, initialContent = '' }: TestExecutionModalProps) {
+export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete, historyMode = false, initialContent = '', reportUrl }: TestExecutionModalProps) {
   const { t } = useTranslation();
   const [outputs, setOutputs] = useState<OutputLine[]>([]);
   const [status, setStatus] = useState<'running' | 'completed' | 'error'>('running');
@@ -109,44 +110,68 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
       open={open}
       onCancel={onClose}
       footer={null}
-      width={800}
+      width={900}
       destroyOnClose
     >
-      <pre
-        ref={outputRef}
-        style={{
-          background: '#1e1e1e',
-          color: '#d4d4d4',
-          padding: '16px',
-          borderRadius: '4px',
-          maxHeight: '400px',
-          overflow: 'auto',
-          fontFamily: 'Monaco, Menlo, monospace',
-          fontSize: '12px',
-          lineHeight: '1.5',
-          margin: 0
-        }}
-      >
-        {outputs.map((line, index) => {
-          if (line.type === 'result') return null;
-          const color = line.type === 'stderr' ? '#f48771' : '#d4d4d4';
-          return (
-            <div key={index} style={{ color }}>
-              {line.content}
-            </div>
-          );
-        })}
-      </pre>
+      <Tabs
+        defaultActiveKey="log"
+        items={[
+          {
+            key: 'log',
+            label: t('testExecution.log'),
+            children: (
+              <>
+                <pre
+                  ref={outputRef}
+                  style={{
+                    background: '#1e1e1e',
+                    color: '#d4d4d4',
+                    padding: '16px',
+                    borderRadius: '4px',
+                    maxHeight: '400px',
+                    overflow: 'auto',
+                    fontFamily: 'Monaco, Menlo, monospace',
+                    fontSize: '12px',
+                    lineHeight: '1.5',
+                    margin: 0
+                  }}
+                >
+                  {outputs.map((line, index) => {
+                    if (line.type === 'result') return null;
+                    const color = line.type === 'stderr' ? '#f48771' : '#d4d4d4';
+                    return (
+                      <div key={index} style={{ color }}>
+                        {line.content}
+                      </div>
+                    );
+                  })}
+                </pre>
 
-      {summary && (
-        <div style={{ marginTop: 16 }}>
-          <Space>
-            <Tag color="green">{t('testExecution.passed')}: {summary.passed}</Tag>
-            {summary.failed > 0 && <Tag color="red">{t('testExecution.failed')}: {summary.failed}</Tag>}
-            <Text type="secondary">{t('testExecution.duration')}: {summary.duration}</Text>
-          </Space>
-        </div>
-      )}
+                {summary && (
+                  <div style={{ marginTop: 16 }}>
+                    <Space>
+                      <Tag color="green">{t('testExecution.passed')}: {summary.passed}</Tag>
+                      {summary.failed > 0 && <Tag color="red">{t('testExecution.failed')}: {summary.failed}</Tag>}
+                      <Text type="secondary">{t('testExecution.duration')}: {summary.duration}</Text>
+                    </Space>
+                  </div>
+                )}
+              </>
+            ),
+          },
+          ...(reportUrl ? [{
+            key: 'report',
+            label: t('testExecution.report'),
+            children: (
+              <iframe
+                src={reportUrl}
+                style={{ width: '100%', height: '500px', border: 'none' }}
+                title="Test Report"
+              />
+            ),
+          }] : []),
+        ]}
+      />
     </Modal>
   );
 }

@@ -93,6 +93,8 @@
     "duration": "Duration",
     "completed": "Completed",
     "error": "Error",
-    "viewingHistory": "View History"
+    "viewingHistory": "View History",
+    "log": "Log",
+    "report": "Report"
   }
 }
