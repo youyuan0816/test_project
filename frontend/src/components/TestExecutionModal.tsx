@@ -14,6 +14,7 @@ interface TestExecutionModalProps {
   onComplete?: (taskId: string) => void;
   historyMode?: boolean;
   initialContent?: string;
+  reportUrl?: string;
 }
 
 interface OutputLine {
@@ -24,7 +25,7 @@ interface OutputLine {
   duration?: string;
 }
 
-export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete, historyMode = false, initialContent = '' }: TestExecutionModalProps) {
+export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete, historyMode = false, initialContent = '', reportUrl }: TestExecutionModalProps) {
   const { t } = useTranslation();
   const [outputs, setOutputs] = useState<OutputLine[]>([]);
   const [status, setStatus] = useState<'running' | 'completed' | 'error'>('running');
@@ -177,6 +178,17 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
           {
             key: 'report',
             label: t('testExecution.report'),
+            children: (
+              <iframe
+                src={reportUrl}
+                style={{ width: '100%', height: '500px', border: 'none' }}
+                title="Test Report"
+              />
+            ),
+          },
+          {
+            key: 'chart',
+            label: t('testExecution.chart'),
             children: (
               <VisualReport taskId={taskId} />
             ),
