@@ -2,6 +2,7 @@ import subprocess
 import os
 import threading
 import time
+import json
 from datetime import datetime
 from typing import Optional, Callable
 from pathlib import Path
@@ -19,13 +20,20 @@ def run_test(
     if not os.path.exists(full_path):
         return {"status": "error", "message": f"Test file not found: {test_code_path}"}
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     task_name = os.path.splitext(os.path.basename(test_code_path))[0]
-    result_log = RESULTS_DIR / f"{task_name}_{timestamp}.log"
 
-    cmd = [sys.executable, "-m", "pytest", test_code_path, "-v", "--tb=short"]
+    # Save log file in tests/{save_path}/results/ directory
+    test_code_dir = os.path.dirname(full_path)
+    results_dir = Path(test_code_dir) / "results"
+    os.makedirs(results_dir, exist_ok=True)
+    result_log = results_dir / f"{task_name}_{timestamp}.log"
+
+    cmd = [
+        sys.executable, "-u", "-m", "pytest",
+        test_code_path, "-v", "--tb=short",
+        "--alluredir", str(results_dir / "allure-results")
+    ]
 
     start_time = time.time()
     try:
@@ -34,23 +42,23 @@ def run_test(
             cwd=PROJECT_ROOT,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1
+            bufsize=0
         )
 
         passed = 0
         failed = 0
 
         with open(result_log, "w", encoding="utf-8") as log_file:
-            for line in iter(process.stdout.readline, ""):
+            for line in iter(process.stdout.readline, b""):
                 if line:
-                    log_file.write(line)
+                    decoded = line.decode("utf-8", errors="replace")
+                    log_file.write(decoded)
                     log_file.flush()
-                    on_output("stdout", line.rstrip())
+                    on_output("stdout", decoded.rstrip())
 
-                if " PASSED" in line:
+                if b" PASSED" in line:
                     passed += 1
-                elif " FAILED" in line:
+                elif b" FAILED" in line:
                     failed += 1
 
                 if time.time() - start_time > timeout:
@@ -60,15 +68,34 @@ def run_test(
 
             process.wait()
 
+        # Generate Allure report
+        allure_results_dir = results_dir / "allure-results"
+        allure_report_dir = results_dir / "allure-report"
+
+        if allure_results_dir.exists():
+            try:
+                subprocess.run(
+                    ["allure", "generate", str(allure_results_dir), "-o", str(allure_report_dir)],
+                    capture_output=True,
+                    timeout=60
+                )
+                print(f"[INFO] Allure report generated: {allure_report_dir}")
+            except Exception as e:
+                print(f"[WARN] Failed to generate Allure report: {e}")
+
         duration = f"{time.time() - start_time:.1f}s"
 
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        result = {"status": "error", "message": str(e)}
+        on_output("result", json.dumps(result))
+        return result
 
-    return {
+    result = {
         "status": "success",
         "passed": passed,
         "failed": failed,
         "duration": duration,
         "log_file": str(result_log)
     }
+    on_output("result", json.dumps(result))
+    return result
