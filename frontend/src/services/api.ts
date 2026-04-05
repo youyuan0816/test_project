@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { GenerateRequest, ContinueRequest, CreateTaskResponse, SessionsResponse, Task, TasksResponse } from './types';
+import type { GenerateRequest, ContinueRequest, CreateTaskResponse, SessionsResponse, Task, TasksResponse, TestCasesResponse } from './types';
 
 const API_BASE = '/api';
 
@@ -39,5 +39,14 @@ export const api = {
   getTask: async (id: string): Promise<Task> => {
     const response = await axios.get(`${API_BASE}/tasks/${id}`);
     return response.data;
+  },
+
+  getTestCases: async (): Promise<TestCasesResponse> => {
+    const response = await axios.get(`${API_BASE}/testcases`);
+    return response.data;
+  },
+
+  downloadTestCode: (taskId: string) => {
+    window.open(`${API_BASE}/download-code/${taskId}`, '_blank');
   },
 };

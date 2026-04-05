@@ -9,12 +9,20 @@ export interface GenerateRequest {
 
 export interface ContinueRequest {
   excel_file: string;
+  task_id?: string;
 }
 
 export interface Session {
-  session_id: string;
-  created_at: string;
+  id: string;
+  task_id: string;
+  excel_path: string;
+  title?: string;
+  time_created?: number;
+  time_updated?: number;
   last_used: string;
+  status: string;
+  created_at: string;
+  deleted_at?: string;
 }
 
 export interface GenerateResponse {
@@ -24,8 +32,7 @@ export interface GenerateResponse {
 }
 
 export interface SessionsResponse {
-  status: 'success';
-  sessions: Record<string, Session>;
+  sessions: Session[];
 }
 
 // Task types
@@ -36,11 +43,13 @@ export interface Task {
   url: string;
   description: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
+  phase?: 'excel_generation' | 'code_generation';
   session_id?: string;
   result_file?: string;
   result_message?: string;
   created_at: string;
   completed_at?: string;
+  deleted_at?: string;
 }
 
 export interface TasksResponse {
@@ -51,4 +60,16 @@ export interface CreateTaskResponse {
   task_id: string;
   status: string;
   message: string;
+}
+
+export interface TestCase {
+  task_id: string;
+  name: string;
+  excel_file?: string;
+  test_code_dir?: string;
+  created_at: string;
+}
+
+export interface TestCasesResponse {
+  testcases: TestCase[];
 }
