@@ -73,8 +73,12 @@ def create_google_home_test_cases():
     ws_config.column_dimensions['A'].width = 15
     ws_config.column_dimensions['B'].width = 40
 
-    wb.save(os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_cases/google.xlsx"))
-    print("测试用例已生成到: test_cases/google.xlsx")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    output_dir = os.path.join(base_dir, "test_cases", "google")
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, "google.xlsx")
+    wb.save(output_path)
+    print(f"测试用例已生成到: {output_path}")
 
 
 if __name__ == "__main__":

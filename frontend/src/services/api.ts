@@ -49,4 +49,9 @@ export const api = {
   downloadTestCode: (taskId: string) => {
     window.open(`${API_BASE}/download-code/${taskId}`, '_blank');
   },
+
+  getTestResult: async (taskId: string): Promise<{ log_content: string; log_file: string }> => {
+    const response = await axios.get(`${API_BASE}/test-result/${taskId}`);
+    return response.data;
+  },
 };

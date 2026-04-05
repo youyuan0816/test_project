@@ -53,7 +53,8 @@ export function TaskList() {
     if (!task.result_file) return;
     setGeneratingTasks(prev => new Set(prev).add(task.id));
     try {
-      await api.continueSession({ excel_file: task.result_file });
+      // 传入 task_id 以复用现有 task，而不是创建新 task
+      await api.continueSession({ excel_file: task.result_file, task_id: task.id });
       message.success(t('message.generatingCode'));
     } catch (error) {
       message.error(t('message.generateFailed', { error: (error as Error).message }));

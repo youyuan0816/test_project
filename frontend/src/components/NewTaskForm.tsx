@@ -42,9 +42,17 @@ export function NewTaskForm({ onClose }: NewTaskFormProps) {
     password?: string;
     description: string;
   }) => {
+    // User inputs just folder name, we construct full path as directory
+    let folderName = values.filepath?.trim() || '';
+    // Remove leading slashes
+    folderName = folderName.replace(/^[\/\\]+/, '');
+    if (!folderName) {
+      folderName = Date.now().toString();
+    }
+    const filepath = `test_cases/${folderName}/`;
     mutation.mutate({
       url: values.url,
-      filepath: values.filepath || `test_cases/${Date.now()}.xlsx`,
+      filepath,
       username: values.username,
       password: values.password,
       description: values.description,
@@ -62,7 +70,7 @@ export function NewTaskForm({ onClose }: NewTaskFormProps) {
       </Form.Item>
 
       <Form.Item name="filepath" label="Save Path">
-        <Input placeholder="test_cases/my_test.xlsx" />
+        <Input placeholder="google (folder name under test_cases/)" />
       </Form.Item>
 
       <Space style={{ width: '100%' }} size="middle">

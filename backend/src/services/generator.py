@@ -37,13 +37,16 @@ def call_opencode(prompt: str, continue_session_id: Optional[str] = None) -> tup
             cmd_parts.extend(["--session", continue_session_id])
 
         cmd = subprocess.list2cmdline(cmd_parts)
-        result = subprocess.run(
-            cmd,
-            cwd=PROJECT_ROOT,
-            capture_output=True,
-            timeout=300,  # 增加到 5 分钟
-            shell=True
-        )
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                timeout=300,  # 增加到 5 分钟
+                shell=True
+            )
+        except subprocess.TimeoutExpired:
+            return ("OpenCode execution timed out after 5 minutes", None)
 
         # 解析 JSON 输出（包含 session ID）
         session_id = None
@@ -181,11 +184,12 @@ Excel 格式要求：
         return {"status": "warning", "message": f"Excel 可能未生成，请检查: {filepath}", "output": output}
 
 
-def continue_session(excel_file: str) -> dict:
+def continue_session(excel_file: str, save_path: str = "") -> dict:
     """继续 session，读取 Excel 生成测试代码（非交互式）
 
     Args:
         excel_file: Excel 文件路径
+        save_path: 保存路径（可选）
 
     Returns:
         dict: {"status": "success"/"error", "message": str, "output": str}
@@ -238,6 +242,21 @@ def continue_session(excel_file: str) -> dict:
     username = config.get("登录账号", "") if config.get("登录账号", "") != "无" else ""
     password = config.get("登录密码", "") if config.get("登录密码", "") != "无" else ""
 
+    # Use save_path as folder name, fallback to parsing from excel_file
+    folder_name = save_path
+    if not folder_name:
+        folder_name = os.path.basename(excel_file.rstrip('/'))
+        if not folder_name:
+            folder_name = os.path.basename(os.path.dirname(excel_file.rstrip('/')))
+    else:
+        # save_path might be "test_cases/google/" or similar - extract the last component
+        folder_name = folder_name.rstrip('/')
+        if '/' in folder_name or '\\' in folder_name:
+            folder_name = os.path.basename(folder_name)
+
+    # Extract the last component of folder_name for the file name
+    file_name = os.path.basename(folder_name.rstrip('/'))
+
     prompt = f"""请读取 Excel 文件 {excel_file} 中的测试用例，为其生成 pytest 测试代码。
 
 配置信息：
@@ -252,7 +271,16 @@ def continue_session(excel_file: str) -> dict:
 1. Page Object 类（封装页面元素和操作），使用 Playwright
 2. pytest 测试用例，使用配置表中的 URL 和账号密码
 
-输出到 tests/ 目录，文件名格式：test_{{module}}.py"""
+重要：目录 tests/{folder_name}/ 已经创建好了，必须将测试代码写入该目录：
+- Page Object 文件：tests/{folder_name}/pages.py
+- 测试用例文件：tests/{folder_name}/test_{file_name}.py
+
+不要写到其他位置，只写到这个已存在的目录中。"""
+
+    # Create the target directory if it doesn't exist
+    target_dir = os.path.join(PROJECT_ROOT, "tests", folder_name)
+    os.makedirs(target_dir, exist_ok=True)
+    print(f"[INFO] 创建目录: {target_dir}")
 
     print(f"[INFO] 正在执行 OpenCode...")
 
@@ -263,11 +291,13 @@ def continue_session(excel_file: str) -> dict:
         save_session_id(excel_file, new_session_id)
         print(f"[INFO] Session ID 已更新: {new_session_id}")
 
+    test_code_dir = "tests/" + folder_name + "/test_" + file_name.replace(" ", "_") + ".py"
+
     return {
         "status": "success",
         "message": "测试代码生成完成",
         "output": output,
-        "test_code_dir": "tests/" + os.path.splitext(os.path.basename(excel_file))[0] + "/"
+        "test_code_dir": test_code_dir
     }
 
 
