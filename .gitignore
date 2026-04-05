@@ -33,6 +33,10 @@ npm-debug.log*
 .coverage
 htmlcov/
 
+# Test
+test_cases/
+tests/
+
 # Temporary
 *.tmp
 *.bak
