@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Modal, Typography, Tag, Space, Tabs } from 'antd';
+import { Modal, Typography, Tag, Space, Tabs, Button } from 'antd';
+import { ExpandOutlined, CompressOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
@@ -28,6 +29,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   const [outputs, setOutputs] = useState<OutputLine[]>([]);
   const [status, setStatus] = useState<'running' | 'completed' | 'error'>('running');
   const [summary, setSummary] = useState<{ passed: number; failed: number; duration: string } | null>(null);
+  const [fullScreen, setFullScreen] = useState(false);
   const outputRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
     setOutputs([]);
     setStatus('running');
     setSummary(null);
+    setFullScreen(false);
 
     // History mode: skip SSE, use initialContent directly
     if (historyMode) {
@@ -101,16 +104,26 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   return (
     <Modal
       title={
-        <Space>
-          <span>{t('testExecution.title')}</span>
-          <Tag>{taskName}</Tag>
-          {getStatusTag()}
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Space>
+            <span>{t('testExecution.title')}</span>
+            <Tag>{taskName}</Tag>
+            {getStatusTag()}
+          </Space>
+          <Button
+            type="text"
+            icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
+            onClick={() => setFullScreen(!fullScreen)}
+          />
         </Space>
       }
       open={open}
       onCancel={onClose}
       footer={null}
-      width={900}
+      width={fullScreen ? '100%' : 900}
+      height={fullScreen ? '100%' : undefined}
+      style={fullScreen ? { top: 0, paddingBottom: 0 } : undefined}
+      styles={fullScreen ? { body: { height: 'calc(100vh - 110px)' } } : {}}
       destroyOnClose
     >
       <Tabs
@@ -128,7 +141,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
                     color: '#d4d4d4',
                     padding: '16px',
                     borderRadius: '4px',
-                    maxHeight: '400px',
+                    maxHeight: fullScreen ? 'calc(100vh - 200px)' : '400px',
                     overflow: 'auto',
                     fontFamily: 'Monaco, Menlo, monospace',
                     fontSize: '12px',
@@ -165,7 +178,7 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
             children: (
               <iframe
                 src={reportUrl}
-                style={{ width: '100%', height: '500px', border: 'none' }}
+                style={{ width: '100%', height: fullScreen ? 'calc(100vh - 200px)' : '500px', border: 'none' }}
                 title="Test Report"
               />
             ),
