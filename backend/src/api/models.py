@@ -13,6 +13,7 @@ class GenerateRequest(BaseModel):
 
 class ContinueRequest(BaseModel):
     excel_file: str
+    task_id: Optional[str] = None  # 可选：复用现有 task
 
 
 class TaskResponse(BaseModel):
@@ -39,3 +40,15 @@ class CreateTaskResponse(BaseModel):
     task_id: str
     status: str
     message: str
+
+
+class TestCaseResponse(BaseModel):
+    task_id: str
+    name: str
+    excel_file: Optional[str]
+    test_code_dir: Optional[str]
+    created_at: str
+
+
+class TestCasesListResponse(BaseModel):
+    testcases: List[TestCaseResponse]

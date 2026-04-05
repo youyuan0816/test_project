@@ -7,7 +7,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure src directory is in Python path
@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import CORS_ORIGINS, PROJECT_ROOT
 from constants import PHASE_EXCEL, PHASE_CODE, STATUS_COMPLETED, STATUS_FAILED
-from api.models import GenerateRequest, ContinueRequest, TaskResponse, TasksListResponse, CreateTaskResponse
+from api.models import GenerateRequest, ContinueRequest, TaskResponse, TasksListResponse, CreateTaskResponse, TestCaseResponse, TestCasesListResponse
 from api.dependencies import get_task_db_dep
 from db.database import get_task_db, TaskDB
 from services.generator import generate_excel, continue_session, list_sessions
@@ -36,6 +36,23 @@ class DeletedTasksListResponse(BaseModel):
     tasks: List[TaskResponse]
 
 
+class SessionResponse(BaseModel):
+    id: str
+    task_id: str
+    excel_path: Optional[str]
+    title: Optional[str]
+    time_created: Optional[int]
+    time_updated: Optional[int]
+    last_used: Optional[str]
+    status: str
+    created_at: str
+    deleted_at: Optional[str]
+
+
+class SessionsListResponse(BaseModel):
+    sessions: List[SessionResponse]
+
+
 def run_generate_excel(task_id: str, url: str, filepath: str, description: str, username: str, password: str, continue_excel: Optional[str]):
     """Background worker for generate_excel"""
     task_db = get_task_db()
@@ -50,7 +67,8 @@ def run_generate_excel(task_id: str, url: str, filepath: str, description: str, 
             continue_excel=continue_excel
         )
         status = "completed" if result["status"] in ("success", "warning") else "failed"
-        task_db.update_task_status(task_id, status, result_file=filepath, result_message=result["message"])
+        result_file = result.get("actual_file", filepath)
+        task_db.update_task_status(task_id, status, result_file=result_file, result_message=result["message"])
     except Exception as e:
         task_db.update_task_status(task_id, "failed", result_message=str(e))
 
@@ -107,13 +125,23 @@ def continue_session_api(req: ContinueRequest, task_db: TaskDB = Depends(get_tas
     调用 generator.py 中的 continue_session 函数，通过 OpenCode 生成 pytest 测试代码
     立即返回 task_id，实际工作在后台执行
     """
-    # Create task
-    task_id = task_db.create_task(
-        name=req.excel_file,
-        task_type="continue_session",
-        url="",
-        description="",
-    )
+    task_id = req.task_id
+
+    # 如果没有提供 task_id，创建新 task
+    if not task_id:
+        task_id = task_db.create_task(
+            name=req.excel_file,
+            task_type="continue_session",
+            url="",
+            description="",
+        )
+    else:
+        # 复用现有 task，更新状态和 phase
+        task = task_db.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        task_db.update_task_phase(task_id, PHASE_CODE)
+        task_db.update_task_status(task_id, "running")
 
     # Start background worker
     thread = threading.Thread(
@@ -125,8 +153,8 @@ def continue_session_api(req: ContinueRequest, task_db: TaskDB = Depends(get_tas
     # Return immediately
     return CreateTaskResponse(
         task_id=task_id,
-        status="pending",
-        message="Task created, processing in background"
+        status="running",
+        message="Code generation started in background"
     )
 
 
@@ -198,11 +226,50 @@ async def upload_excel_api(task_id: str, file: UploadFile = File(...), task_db: 
     }
 
 
-@app.get("/sessions")
-def get_sessions():
-    """获取所有保存的 session 列表"""
-    result = list_sessions()
-    return result
+@app.get("/sessions", response_model=SessionsListResponse)
+def get_sessions(task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取所有 Session 列表"""
+    sessions = task_db.list_sessions()
+    return SessionsListResponse(sessions=sessions)
+
+
+@app.get("/tasks/{task_id}/session", response_model=SessionResponse)
+def get_task_session(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取 Task 关联的 Session"""
+    session = task_db.get_session(task_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return SessionResponse(**session)
+
+
+@app.delete("/sessions/{task_id}", status_code=204)
+def delete_session(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """删除 Task 的 Session（软删除）"""
+    session = task_db.get_session(task_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    task_db.soft_delete_session(task_id)
+    return None
+
+
+@app.post("/sessions/{task_id}/restore", response_model=SessionResponse)
+def restore_session_api(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """恢复 Session"""
+    # Check if session exists and is deleted
+    with sqlite3.connect(task_db.db_path) as conn:
+        cursor = conn.execute(
+            "SELECT * FROM sessions WHERE task_id = ? AND deleted_at IS NOT NULL",
+            (task_id,)
+        )
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    task_db.restore_session(task_id)
+    session = task_db.get_session(task_id)
+    return SessionResponse(**session)
 
 
 @app.get("/tasks", response_model=TasksListResponse)
@@ -314,3 +381,65 @@ def download_task_file(task_id: str, task_db: TaskDB = Depends(get_task_db_dep))
 def health_check():
     """健康检查"""
     return {"status": "ok"}
+
+
+@app.get("/testcases", response_model=TestCasesListResponse)
+def get_testcases(task_db: TaskDB = Depends(get_task_db_dep)):
+    """获取所有生成了测试代码的 Task 列表"""
+    tasks = task_db.list_tasks()
+    testcases = [
+        TestCaseResponse(
+            task_id=t["id"],
+            name=t["name"],
+            excel_file=t.get("result_file"),
+            test_code_dir=t.get("test_code_file"),
+            created_at=t["created_at"],
+        )
+        for t in tasks
+        if t.get("test_code_file") and t.get("status") == "completed"
+    ]
+    return TestCasesListResponse(testcases=testcases)
+
+
+@app.get("/download-code/{task_id}")
+def download_test_code(task_id: str, task_db: TaskDB = Depends(get_task_db_dep)):
+    """下载测试代码目录（zip 格式）"""
+    task = task_db.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    test_code_dir = task.get("test_code_file")
+    if not test_code_dir:
+        raise HTTPException(status_code=404, detail="No test code for this task")
+
+    # Security check: ensure path is within tests/ directory
+    normalized = os.path.normpath(test_code_dir.replace('/', os.sep))
+    if ".." in normalized or not normalized.startswith("tests"):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    full_path = os.path.join(PROJECT_ROOT, normalized)
+
+    if not os.path.exists(full_path) or not os.path.isdir(full_path):
+        raise HTTPException(status_code=404, detail="Directory not found")
+
+    # Create zip from directory
+    import zipfile
+    import io
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(full_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, PROJECT_ROOT)
+                zipf.write(file_path, arcname)
+
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        iter([zip_buffer.getvalue()]),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={os.path.basename(test_code_dir)}.zip"
+        }
+    )
