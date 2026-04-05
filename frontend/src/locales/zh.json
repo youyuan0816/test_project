@@ -96,6 +96,24 @@
     "viewingHistory": "查看历史记录",
     "log": "日志",
     "report": "报告",
+    "chart": "图表",
     "viewError": "查看错误"
+  },
+  "visualReport": {
+    "loading": "加载中...",
+    "noData": "暂无报告数据",
+    "testCase": "测试用例",
+    "status": "状态",
+    "duration": "耗时",
+    "error": "错误",
+    "viewError": "查看错误",
+    "summary": "概览",
+    "statistics": "统计",
+    "total": "总数",
+    "passed": "通过",
+    "failed": "失败",
+    "skipped": "跳过",
+    "cases": "用例",
+    "failures": "失败用例"
   }
 }

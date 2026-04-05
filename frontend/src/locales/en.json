@@ -96,6 +96,24 @@
     "viewingHistory": "View History",
     "log": "Log",
     "report": "Report",
+    "chart": "Chart",
     "viewError": "View Error"
+  },
+  "visualReport": {
+    "loading": "Loading...",
+    "noData": "No report data",
+    "testCase": "Test Case",
+    "status": "Status",
+    "duration": "Duration",
+    "error": "Error",
+    "viewError": "View Error",
+    "summary": "Summary",
+    "statistics": "Statistics",
+    "total": "Total",
+    "passed": "Passed",
+    "failed": "Failed",
+    "skipped": "Skipped",
+    "cases": "Cases",
+    "failures": "Failures"
   }
 }
