@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
+import { DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/services/api';
 import type { TestCase } from '@/services/types';
+import { TestExecutionModal } from './TestExecutionModal';
 
 export function TestCases() {
   const { t } = useTranslation();
   const [testcases, setTestcases] = useState<TestCase[]>([]);
   const [loading, setLoading] = useState(false);
+  const [executionModal, setExecutionModal] = useState<{ open: boolean; taskId: string; taskName: string }>({
+    open: false,
+    taskId: '',
+    taskName: ''
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -17,6 +24,25 @@ export function TestCases() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const getActionItems = (record: TestCase): MenuProps['items'] => {
+    const items: MenuProps['items'] = [];
+    if (record.test_code_dir) {
+      items.push({
+        key: 'run',
+        icon: <PlayCircleOutlined />,
+        label: t('testcase.runTest'),
+        onClick: () => setExecutionModal({ open: true, taskId: record.task_id, taskName: record.name }),
+      });
+      items.push({
+        key: 'download',
+        icon: <DownloadOutlined />,
+        label: t('testcase.downloadCode'),
+        onClick: () => api.downloadTestCode(record.task_id),
+      });
+    }
+    return items;
+  };
 
   const columns = [
     {
@@ -46,42 +72,34 @@ export function TestCases() {
       title: t('common.action'),
       key: 'action',
       render: (_: unknown, record: TestCase) => (
-        <Space>
-          {record.excel_file && (
-            <Button
-              size="small"
-              icon={<DownloadOutlined />}
-              onClick={() => window.open(`/api/download/${record.task_id}`, '_blank')}
-            >
-              {t('testcase.downloadExcel')}
-            </Button>
-          )}
-          {record.test_code_dir && (
-            <Button
-              size="small"
-              icon={<DownloadOutlined />}
-              onClick={() => api.downloadTestCode(record.task_id)}
-            >
-              {t('testcase.downloadCode')}
-            </Button>
-          )}
-        </Space>
+        <Dropdown
+          menu={{ items: getActionItems(record) }}
+          trigger={['click']}
+        >
+          <Button type="text" size="small">
+            {t('common.action')}
+          </Button>
+        </Dropdown>
       ),
     },
   ];
 
   return (
-    <Card loading={loading}>
-      {testcases.length === 0 ? (
-        <span>{t('testcase.empty')}</span>
-      ) : (
-        <Table
-          dataSource={testcases}
-          columns={columns}
-          rowKey="task_id"
-          pagination={false}
-        />
-      )}
-    </Card>
+    <>
+      <Table
+        dataSource={testcases}
+        columns={columns}
+        rowKey="task_id"
+        pagination={false}
+        loading={loading}
+        locale={{ emptyText: t('testcase.empty') }}
+      />
+      <TestExecutionModal
+        open={executionModal.open}
+        taskId={executionModal.taskId}
+        taskName={executionModal.taskName}
+        onClose={() => setExecutionModal({ open: false, taskId: '', taskName: '' })}
+      />
+    </>
   );
 }
