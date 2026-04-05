@@ -7,11 +7,7 @@ interface PieChartProps {
   height?: number;
 }
 
-const COLORS: Record<string, string> = {
-  Passed: '#52c41a',
-  Failed: '#ff4d4f',
-  Skipped: '#faad14',
-};
+const COLORS = ['#52c41a', '#ff4d4f', '#faad14'];
 
 export function PieChart({ data, width = 400, height = 300 }: PieChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -52,7 +48,7 @@ export function PieChart({ data, width = 400, height = 300 }: PieChartProps) {
 
     arcs.append('path')
       .attr('d', arc)
-      .attr('fill', d => COLORS[d.data.type] || '#999')
+      .attr('fill', (_, i) => COLORS[i] || '#999')
       .attr('stroke', '#fff')
       .attr('stroke-width', 2);
 
@@ -75,7 +71,7 @@ export function PieChart({ data, width = 400, height = 300 }: PieChartProps) {
       legendRow.append('rect')
         .attr('width', 14)
         .attr('height', 14)
-        .attr('fill', COLORS[item.type] || '#999')
+        .attr('fill', COLORS[i] || '#999')
         .attr('rx', 2);
 
       legendRow.append('text')
