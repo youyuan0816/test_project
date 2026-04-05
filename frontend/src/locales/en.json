@@ -80,6 +80,16 @@
     "createdAt": "Created At",
     "downloadExcel": "Download Excel",
     "downloadCode": "Download Code",
-    "empty": "No test cases yet"
+    "empty": "No test cases yet",
+    "runTest": "Run Test"
+  },
+  "testExecution": {
+    "title": "Test Execution",
+    "running": "Running...",
+    "passed": "Passed",
+    "failed": "Failed",
+    "duration": "Duration",
+    "completed": "Completed",
+    "error": "Error"
   }
 }

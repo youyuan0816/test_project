@@ -80,6 +80,16 @@
     "createdAt": "创建时间",
     "downloadExcel": "下载 Excel",
     "downloadCode": "下载代码",
-    "empty": "暂无测试用例"
+    "empty": "暂无测试用例",
+    "runTest": "执行测试"
+  },
+  "testExecution": {
+    "title": "测试执行",
+    "running": "执行中...",
+    "passed": "通过",
+    "failed": "失败",
+    "duration": "耗时",
+    "completed": "执行完成",
+    "error": "执行出错"
   }
 }
