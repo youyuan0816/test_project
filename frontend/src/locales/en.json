@@ -71,5 +71,15 @@
   "phase": {
     "excel_generation": "Generating Excel",
     "code_generation": "Generating Code"
+  },
+  "testcase": {
+    "title": "Test Cases",
+    "name": "Task Name",
+    "excel": "Excel File",
+    "testCode": "Test Code",
+    "createdAt": "Created At",
+    "downloadExcel": "Download Excel",
+    "downloadCode": "Download Code",
+    "empty": "No test cases yet"
   }
 }

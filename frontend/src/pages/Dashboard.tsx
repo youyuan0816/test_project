@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Typography, Button, Card, Space, Table, Tag, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { DashboardOutlined, FileTextOutlined, HistoryOutlined } from '@ant-design/icons';
 import { TaskList } from '@/components/TaskList';
 import { NewTaskForm } from '@/components/NewTaskForm';
 import { UploadExcel } from '@/components/UploadExcel';
+import { TestCases } from '@/components/TestCases';
 import { useTasks } from '@/hooks/useTasks';
 import { api } from '@/services/api';
 import type { Session } from '@/services/types';
@@ -16,11 +18,28 @@ type MenuKey = 'dashboard' | 'sessions' | 'testcases';
 
 export function Dashboard() {
   const { t, i18n } = useTranslation();
-  const [selectedMenu, setSelectedMenu] = useState<MenuKey>('dashboard');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showNewTask, setShowNewTask] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  const [sessions, setSessions] = useState<Record<string, Session>>({});
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  const getSelectedMenu = (): MenuKey => {
+    const path = location.pathname.slice(1);
+    if (path === 'sessions' || path === 'testcases') return path;
+    return 'dashboard';
+  };
+
+  const selectedMenu = getSelectedMenu();
+
+  const handleMenuClick = ({ key }: { key: string }) => {
+    if (key === 'dashboard') {
+      navigate('/dashboard');
+    } else {
+      navigate(`/${key}`);
+    }
+  };
 
   useTasks();
 
@@ -38,17 +57,17 @@ export function Dashboard() {
 
   const menuItems = [
     {
-      key: 'dashboard' as MenuKey,
+      key: 'dashboard',
       icon: <DashboardOutlined />,
       label: t('nav.dashboard'),
     },
     {
-      key: 'sessions' as MenuKey,
+      key: 'sessions',
       icon: <HistoryOutlined />,
       label: t('nav.sessions'),
     },
     {
-      key: 'testcases' as MenuKey,
+      key: 'testcases',
       icon: <FileTextOutlined />,
       label: t('nav.testcases'),
     },
@@ -59,14 +78,14 @@ export function Dashboard() {
       case 'sessions':
         return (
           <Card title={t('card.sessions')} loading={sessionsLoading}>
-            {Object.keys(sessions).length === 0 && !sessionsLoading ? (
+            {sessions.length === 0 && !sessionsLoading ? (
               <Text type="secondary">{t('card.noSessions')}</Text>
             ) : (
               <Table
-                dataSource={Object.entries(sessions).map(([key, session]) => ({
-                  key,
-                  filename: key,
-                  sessionId: session.session_id,
+                dataSource={sessions.map((session) => ({
+                  key: session.id,
+                  filename: session.excel_path,
+                  sessionId: session.id,
                   createdAt: session.created_at,
                   lastUsed: session.last_used,
                 }))}
@@ -86,11 +105,13 @@ export function Dashboard() {
                     title: t('session.createdAt'),
                     dataIndex: 'createdAt',
                     key: 'createdAt',
+                    render: (text: string) => text ? new Date(text).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-',
                   },
                   {
                     title: t('session.lastUsed'),
                     dataIndex: 'lastUsed',
                     key: 'lastUsed',
+                    render: (text: string) => text ? new Date(text).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-',
                   },
                 ]}
                 pagination={false}
@@ -101,7 +122,7 @@ export function Dashboard() {
       case 'testcases':
         return (
           <Card title={t('card.testCases')}>
-            <Text type="secondary">{t('card.viewTestCases')}</Text>
+            <TestCases />
           </Card>
         );
       default:
@@ -133,16 +154,18 @@ export function Dashboard() {
               </Card>
             )}
 
-            <Card
-              title={t('card.tasks')}
-              extra={
-                <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
-                  {t('button.newTask')}
-                </Button>
-              }
-            >
-              <TaskList />
-            </Card>
+            {!showNewTask && !showUpload && (
+              <Card
+                title={t('card.tasks')}
+                extra={
+                  <Button type="primary" icon={<DashboardOutlined />} onClick={() => setShowNewTask(!showNewTask)}>
+                    {t('button.newTask')}
+                  </Button>
+                }
+              >
+                <TaskList />
+              </Card>
+            )}
           </>
         );
     }
@@ -159,8 +182,8 @@ export function Dashboard() {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[selectedMenu]}
-          onClick={({ key }) => setSelectedMenu(key as MenuKey)}
+          selectedKeys={[selectedMenu === 'dashboard' ? 'dashboard' : selectedMenu]}
+          onClick={handleMenuClick}
           items={menuItems}
           style={{ borderRight: 0 }}
         />
@@ -169,7 +192,7 @@ export function Dashboard() {
       <Layout>
         <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#fff', justifyContent: 'space-between' }}>
           <Title level={4} style={{ margin: 0 }}>
-            {menuItems.find(item => item.key === selectedMenu)?.label}
+            {menuItems.find(item => item.key === (selectedMenu === 'dashboard' ? 'dashboard' : selectedMenu))?.label}
           </Title>
           <Select
             value={i18n.language}

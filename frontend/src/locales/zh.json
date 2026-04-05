@@ -71,5 +71,15 @@
   "phase": {
     "excel_generation": "Excel生成中",
     "code_generation": "代码生成中"
+  },
+  "testcase": {
+    "title": "测试用例",
+    "name": "任务名称",
+    "excel": "Excel 文件",
+    "testCode": "测试代码",
+    "createdAt": "创建时间",
+    "downloadExcel": "下载 Excel",
+    "downloadCode": "下载代码",
+    "empty": "暂无测试用例"
   }
 }
