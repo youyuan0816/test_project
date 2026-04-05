@@ -37,6 +37,9 @@ htmlcov/
 test_cases/
 tests/
 
+# Test artifacts
+backend/page.html
+
 # Temporary
 *.tmp
 *.bak
