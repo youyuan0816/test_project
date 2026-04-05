@@ -40,7 +40,6 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
     setSummary(null);
     setFullScreen(false);
 
-    // History mode: skip SSE, use initialContent directly
     if (historyMode) {
       if (initialContent) {
         setOutputs([{ type: 'stdout', content: initialContent }]);
@@ -104,20 +103,11 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
   return (
     <Modal
       title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <Space>
-            <span>{t('testExecution.title')}</span>
-            <Tag>{taskName}</Tag>
-            {getStatusTag()}
-          </Space>
-          <Space size="large">
-            <Button
-              type="text"
-              icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
-              onClick={(e) => { e.stopPropagation(); setFullScreen(!fullScreen); }}
-            />
-          </Space>
-        </div>
+        <Space>
+          <span>{t('testExecution.title')}</span>
+          <Tag>{taskName}</Tag>
+          {getStatusTag()}
+        </Space>
       }
       open={open}
       onCancel={onClose}
@@ -131,6 +121,15 @@ export function TestExecutionModal({ open, taskId, taskName, onClose, onComplete
     >
       <Tabs
         defaultActiveKey="log"
+        tabBarExtraContent={{
+          right: (
+            <Button
+              type="text"
+              icon={fullScreen ? <CompressOutlined /> : <ExpandOutlined />}
+              onClick={() => setFullScreen(!fullScreen)}
+            />
+          )
+        }}
         items={[
           {
             key: 'log',
