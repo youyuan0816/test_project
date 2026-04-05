@@ -95,6 +95,7 @@
     "error": "执行出错",
     "viewingHistory": "查看历史记录",
     "log": "日志",
-    "report": "报告"
+    "report": "报告",
+    "viewError": "查看错误"
   }
 }

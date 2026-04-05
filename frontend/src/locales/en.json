@@ -95,6 +95,7 @@
     "error": "Error",
     "viewingHistory": "View History",
     "log": "Log",
-    "report": "Report"
+    "report": "Report",
+    "viewError": "View Error"
   }
 }
