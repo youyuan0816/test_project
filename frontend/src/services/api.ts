@@ -54,4 +54,12 @@ export const api = {
     const response = await axios.get(`${API_BASE}/test-result/${taskId}`);
     return response.data;
   },
+
+  getReportData: async (taskId: string): Promise<{
+    summary: { total: number; passed: number; failed: number; skipped: number };
+    test_cases: Array<{ name: string; status: string; duration: string; message: string | null }>;
+  }> => {
+    const response = await axios.get(`${API_BASE}/test-result/${taskId}/report-data`);
+    return response.data;
+  },
 };
