@@ -23,11 +23,12 @@ export function TestCases() {
     allureReportUrl: undefined
   });
   const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
-  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string }>({
+  const [detailModal, setDetailModal] = useState<{ open: boolean; taskId: string; taskName: string; logContent?: string; allureReportUrl?: string }>({
     open: false,
     taskId: '',
     taskName: '',
-    logContent: ''
+    logContent: '',
+    allureReportUrl: undefined
   });
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export function TestCases() {
         onClick: async () => {
           try {
             const result = await api.getTestResult(record.task_id);
-            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content });
+            setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: result.log_content, allureReportUrl: result.allure_report_url });
           } catch (error) {
             console.error('Failed to fetch test result:', error);
             setDetailModal({ open: true, taskId: record.task_id, taskName: record.name, logContent: 'Failed to load log content' });
@@ -150,7 +151,8 @@ export function TestCases() {
         taskName={detailModal.taskName}
         historyMode={true}
         initialContent={detailModal.logContent || ''}
-        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '' })}
+        allureReportUrl={detailModal.allureReportUrl}
+        onClose={() => setDetailModal({ open: false, taskId: '', taskName: '', logContent: '', allureReportUrl: undefined })}
       />
     </>
   );
